@@ -20,6 +20,8 @@ import { eventosRouter } from './routes/eventos.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+// Detrás de un proxy (Cloudflare Tunnel): req.ip toma la IP real del visitante
+if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
 
 // Las fotos llegan en base64, por eso esas rutas aceptan cuerpos más grandes
 const jsonNormal = express.json({ limit: '100kb' });

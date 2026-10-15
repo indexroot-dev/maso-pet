@@ -1,0 +1,46 @@
+# En la Raspberry Pi:  docker compose up -d --build
+# Variables en .env (ver .env.example). El túnel necesita TUNNEL_TOKEN.
+
+# Logs acotados para no llenar el disco
+x-logs: &logs
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  app:
+    build: .
+    image: masopet
+    container_name: masopet-app
+    restart: unless-stopped
+    mem_limit: 192m
+    <<: *logs
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TZ: ${TZ:-America/Santiago}
+      # cloudflared llega por la red de Docker: confiar en proxies de redes privadas
+      TRUST_PROXY: uniquelocal
+    volumes:
+      - ./data:/app/data
+    ports:
+      # Solo en localhost: a internet sale por el túnel
+      - "127.0.0.1:${APP_PORT:-3100}:3000"
+
+  # Publica la app (ej. masopet.allsx.me → http://app:3000) por Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: masopet-tunel
+    restart: unless-stopped
+    mem_limit: 128m
+    <<: *logs
+    depends_on:
+      - app
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
