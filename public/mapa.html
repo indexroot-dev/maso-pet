@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Mapa pet-friendly — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="mapa-layout">
+    <aside class="panel" id="panel">
+      <!-- Vista de lista -->
+      <div id="vista-lista">
+        <h1>Lugares pet-friendly</h1>
+        <p class="sutil">Encuentra restaurantes, parques, hoteles y más donde tu mascota es bienvenida.</p>
+
+        <input id="buscar" type="search" placeholder="Buscar por nombre o dirección…" aria-label="Buscar lugares">
+        <div class="chips" id="chips"></div>
+        <div class="chips">
+          <button type="button" class="chip" id="chip-favoritos" aria-pressed="false">❤️ Mis favoritos</button>
+          <button type="button" class="chip activo" id="chip-perdidas" aria-pressed="true">🚨 Mascotas perdidas</button>
+        </div>
+
+        <div class="barra-mapa">
+          <button class="btn sec chico" id="btn-cerca" type="button">📍 Cerca de mí</button>
+          <button class="btn chico" id="btn-agregar" type="button">＋ Agregar lugar</button>
+          <label class="ordenar">Ordenar
+            <select id="orden">
+              <option value="nombre">Por nombre</option>
+              <option value="valoracion">Mejor valorados</option>
+              <option value="distancia" disabled>Más cercanos</option>
+            </select>
+          </label>
+        </div>
+
+        <form id="form-lugar" class="tarjeta oculto">
+          <h2>Nuevo lugar</h2>
+          <p class="sutil" id="ayuda-ubicacion">Haz clic en el mapa para marcar la ubicación.</p>
+          <div id="aviso-lugar"></div>
+          <div class="campos">
+            <label class="ancho">Nombre *<input name="nombre" required maxlength="120"></label>
+            <label>Categoría *
+              <select name="categoria" id="select-categoria" required></select>
+            </label>
+            <label>Admite
+              <select name="mascotas_admitidas">
+                <option value="todas">Todas las mascotas</option>
+                <option value="perros">Solo perros</option>
+                <option value="gatos">Solo gatos</option>
+              </select>
+            </label>
+            <label class="ancho">Dirección<input name="direccion" maxlength="200"></label>
+            <label class="ancho">Descripción<textarea name="descripcion" maxlength="1000" placeholder="¿Qué ofrece para mascotas? ¿Tiene reglas?"></textarea></label>
+            <input type="hidden" name="lat">
+            <input type="hidden" name="lng">
+          </div>
+          <div class="acciones">
+            <button class="btn" type="submit">Guardar lugar</button>
+            <button class="btn sec" type="button" id="btn-cancelar">Cancelar</button>
+          </div>
+        </form>
+
+        <p class="sutil" id="contador"></p>
+        <ul class="lista-lugares" id="lista"></ul>
+      </div>
+
+      <!-- Vista de detalle de un lugar -->
+      <div id="vista-detalle" class="oculto">
+        <button class="btn sec chico" id="btn-volver" type="button">← Volver a la lista</button>
+        <div id="detalle"></div>
+        <section class="resenas">
+          <h2>Reseñas</h2>
+          <div id="resumen-resenas"></div>
+          <form id="form-resena" class="tarjeta">
+            <h3 id="titulo-form-resena">Deja tu reseña</h3>
+            <div id="aviso-resena"></div>
+            <div class="calificar" role="radiogroup" aria-label="Tu calificación">
+              <input type="radio" id="estrella-5" name="estrellas" value="5"><label for="estrella-5" title="5 estrellas">★</label>
+              <input type="radio" id="estrella-4" name="estrellas" value="4"><label for="estrella-4" title="4 estrellas">★</label>
+              <input type="radio" id="estrella-3" name="estrellas" value="3"><label for="estrella-3" title="3 estrellas">★</label>
+              <input type="radio" id="estrella-2" name="estrellas" value="2"><label for="estrella-2" title="2 estrellas">★</label>
+              <input type="radio" id="estrella-1" name="estrellas" value="1"><label for="estrella-1" title="1 estrella">★</label>
+            </div>
+            <label>Comentario<textarea name="comentario" maxlength="1000" placeholder="¿Cómo los recibieron? ¿Tienen agua, sombra, espacio?"></textarea></label>
+            <div class="acciones" style="margin-top: .75rem">
+              <button class="btn" type="submit">Publicar reseña</button>
+              <button class="btn peligro oculto" type="button" id="btn-borrar-resena">Borrar mi reseña</button>
+            </div>
+          </form>
+          <ul class="lista-resenas" id="lista-resenas"></ul>
+        </section>
+      </div>
+    </aside>
+
+    <div id="mapa"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/mapa.js"></script>
+</body>
+</html>

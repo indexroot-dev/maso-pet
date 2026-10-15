@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Paseo — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <p><a href="paseos.html">← Paseos</a></p>
+    <div id="aviso-general"></div>
+
+    <div id="contenido" class="oculto">
+      <p class="aviso error oculto" id="aviso-cancelado">❌ Este paseo fue cancelado por quien lo organizaba.</p>
+      <p class="aviso oculto" id="aviso-invitacion">💌 Te invitaron a este paseo. ¿Te sumas?</p>
+
+      <section class="tarjeta">
+        <div class="paseo-cabecera">
+          <div class="fecha-bloque grande"><span class="dia" id="dia"></span><span class="mes-corto" id="mes"></span></div>
+          <div>
+            <h1 id="titulo"></h1>
+            <div id="cuando"></div>
+            <div class="sutil" id="organiza"></div>
+          </div>
+        </div>
+        <p id="descripcion"></p>
+        <div class="acciones" id="acciones"></div>
+        <h3>📍 <span id="punto"></span></h3>
+        <div id="mapa-paseo" class="mapa-chico"></div>
+        <p><a id="como-llegar" target="_blank" rel="noopener">🧭 Cómo llegar</a></p>
+      </section>
+
+      <section class="tarjeta">
+        <h2>🐾 Quiénes van <span class="sutil" id="cupo"></span></h2>
+        <div id="participantes" class="lista-participantes"></div>
+        <div id="invitar" class="invitar oculto">
+          <h3>Invitar vecinos</h3>
+          <div class="barra-admin">
+            <select id="select-vecino" aria-label="Vecino a invitar"></select>
+            <button class="btn sec chico" type="button" id="btn-invitar">💌 Invitar</button>
+          </div>
+          <p class="sutil" id="aviso-invitar"></p>
+        </div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>💬 Conversación</h2>
+        <p class="sutil">Coordinen detalles, compartan el recorrido o avisen si se atrasan.</p>
+        <ul id="comentarios" class="comentarios"></ul>
+        <form id="form-comentario">
+          <div id="aviso-comentario"></div>
+          <label>Escribe un mensaje<textarea name="texto" required maxlength="1000" placeholder="Ej: ¡Llevo agua y bolsitas para todos!"></textarea></label>
+          <button class="btn" type="submit" style="margin-top: .5rem">Enviar</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/paseo.js"></script>
+</body>
+</html>

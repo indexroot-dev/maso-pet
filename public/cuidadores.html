@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Paseadores y cuidadores — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor ancho-admin">
+    <h1>🤝 Paseadores y cuidadores</h1>
+    <p class="sutil">Encuentra a alguien de confianza cerca para pasear o cuidar a tu mascota, con reseñas de otros usuarios.</p>
+
+    <nav class="pestanas" role="tablist" aria-label="Secciones">
+      <button role="tab" data-pestana="buscar" aria-selected="true">🔎 Buscar</button>
+      <button role="tab" data-pestana="perfil" aria-selected="false">💼 Ofrecer mis servicios</button>
+    </nav>
+
+    <section id="pestana-buscar" role="tabpanel">
+      <div class="barra-admin">
+        <select id="filtro-servicio" aria-label="Servicio"></select>
+        <select id="filtro-especie" aria-label="Especie">
+          <option value="">Cualquier mascota</option><option value="perro">Perros</option><option value="gato">Gatos</option><option value="otro">Otras</option>
+        </select>
+        <select id="filtro-radio" aria-label="Distancia">
+          <option value="3">A 3 km</option><option value="5">A 5 km</option><option value="10" selected>A 10 km</option><option value="20">A 20 km</option>
+        </select>
+        <select id="filtro-orden" aria-label="Orden">
+          <option value="distancia">Más cercanos</option><option value="valoracion">Mejor valorados</option>
+        </select>
+        <button class="btn sec chico" type="button" id="btn-ubicacion">📍 Usar mi ubicación</button>
+      </div>
+      <p class="sutil oculto" id="sin-origen">Mostrando todos, ordenados por valoración. Usa tu ubicación (o activa tu perfil de paseo) para ver los más cercanos.</p>
+      <div id="lista" class="grid-vecinos"></div>
+    </section>
+
+    <section id="pestana-perfil" role="tabpanel" class="oculto">
+      <form id="form-perfil" class="tarjeta">
+        <h2>Mi perfil de paseador/cuidador</h2>
+        <div id="aviso-perfil"></div>
+        <label class="check interruptor"><input type="checkbox" name="activo"> Mostrar mi perfil a otros usuarios</label>
+        <div class="perfil-foto">
+          <div id="vista-foto"></div>
+          <label class="btn sec chico" for="input-foto">📷 Foto de perfil</label>
+          <input type="file" id="input-foto" accept="image/*" hidden>
+        </div>
+
+        <h3>¿Qué servicios ofreces? *</h3>
+        <div class="chips" id="servicios"></div>
+        <h3>¿Qué mascotas aceptas?</h3>
+        <div class="chips">
+          <label class="check chip-check"><input type="checkbox" name="especies" value="perro"> 🐶 Perros</label>
+          <label class="check chip-check"><input type="checkbox" name="especies" value="gato"> 🐱 Gatos</label>
+          <label class="check chip-check"><input type="checkbox" name="especies" value="otro"> 🐾 Otras</label>
+        </div>
+        <h3>¿De qué tamaño?</h3>
+        <div class="chips" id="tamanos"></div>
+        <h3>¿Cuándo estás disponible?</h3>
+        <div class="chips" id="horarios"></div>
+
+        <div class="campos" style="margin-top: 1rem">
+          <label>Tarifa<input name="tarifa" maxlength="120" placeholder="Ej: Desde $5.000 por paseo de 1 hora"></label>
+          <label>Teléfono o WhatsApp *<input name="contacto" maxlength="120" placeholder="+56 9 1234 5678"></label>
+          <label class="ancho">Sobre ti y tu experiencia<textarea name="descripcion" maxlength="2000" placeholder="Experiencia con mascotas, cursos, si tienes patio, cuántas mascotas paseas a la vez…"></textarea></label>
+        </div>
+        <h3>Tu zona de trabajo *</h3>
+        <p class="sutil">Toca el mapa cerca de donde trabajas. Se guarda una zona aproximada (~1 km), nunca tu dirección.</p>
+        <div id="mapa-zona" class="mapa-chico"></div>
+        <input type="hidden" name="lat"><input type="hidden" name="lng">
+        <label style="margin-top: .75rem; max-width: 260px">Hasta qué distancia te desplazas
+          <select name="cobertura_km"><option value="1">1 km</option><option value="3">3 km</option><option value="5" selected>5 km</option><option value="10">10 km</option><option value="20">20 km</option></select>
+        </label>
+        <div class="acciones" style="margin-top: 1rem">
+          <button class="btn" type="submit">Guardar perfil</button>
+          <a class="btn sec oculto" id="ver-perfil" href="#">Ver mi perfil público</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/cuidadores.js"></script>
+</body>
+</html>

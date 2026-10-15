@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Libro de control — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <p class="no-imprimir"><a href="mascotas.html">← Mis mascotas</a></p>
+    <div id="aviso-general"></div>
+
+    <!-- Portada del libro -->
+    <section class="tarjeta libro-portada">
+      <div id="libro-foto"><img src="logo-huella.png" alt="" class="libro-logo"></div>
+      <div class="libro-titulos">
+        <div class="libro-etiqueta">Libro de control</div>
+        <h1 id="titulo">Cargando…</h1>
+        <div class="sutil" id="subtitulo"></div>
+        <div class="sutil" id="duenio"></div>
+      </div>
+      <div class="acciones no-imprimir">
+        <a class="btn sec chico" id="enlace-ficha" href="#">🩺 Ficha clínica</a>
+        <button class="btn sec chico" type="button" onclick="window.print()">🖨️ Imprimir libro</button>
+      </div>
+    </section>
+
+    <!-- Resumen -->
+    <section class="indicadores">
+      <div class="tarjeta indicador"><div class="sutil">Peso actual</div><div class="valor" id="ind-peso">—</div><div class="sutil" id="ind-peso-delta"></div></div>
+      <div class="tarjeta indicador"><div class="sutil">Anotaciones</div><div class="valor" id="ind-total">0</div></div>
+      <div class="tarjeta indicador"><div class="sutil">Última anotación</div><div class="valor chico" id="ind-ultima">—</div></div>
+    </section>
+
+    <!-- Evolución del peso -->
+    <section class="tarjeta">
+      <h2>⚖️ Evolución del peso (kg)</h2>
+      <p class="sutil">Incluye los pesos anotados en este libro y en las consultas de la ficha clínica.</p>
+      <div class="grafico" id="grafico">
+        <div class="grafico-tooltip oculto" id="tooltip" role="status"></div>
+      </div>
+      <details class="no-imprimir" id="detalle-tabla-peso">
+        <summary>Ver como tabla</summary>
+        <div class="tabla-scroll" id="tabla-peso"></div>
+      </details>
+    </section>
+
+    <!-- Nueva anotación -->
+    <section class="tarjeta no-imprimir">
+      <h2>✍️ Nueva anotación</h2>
+      <form id="form-anotacion">
+        <div id="aviso-anotacion"></div>
+        <div class="campos">
+          <label>Fecha *<input name="fecha" type="date" required></label>
+          <label>Tipo *<select name="tipo" id="select-tipo" required></select></label>
+          <label>Peso (kg)<input name="peso" type="number" step="0.01" min="0" placeholder="Opcional"></label>
+          <label class="ancho">Título *<input name="titulo" required maxlength="200" placeholder="Ej: Comió poco, Paseo largo en el parque, Inicia antibiótico…"></label>
+          <label class="ancho">Detalle<textarea name="detalle" placeholder="Dosis, cantidades, duración, observaciones…"></textarea></label>
+        </div>
+        <button class="btn" type="submit">Guardar anotación</button>
+      </form>
+    </section>
+
+    <!-- Anotaciones -->
+    <section class="tarjeta">
+      <h2>📖 Anotaciones</h2>
+      <div class="chips no-imprimir" id="filtros"></div>
+      <div id="anotaciones"></div>
+    </section>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/libro.js"></script>
+</body>
+</html>

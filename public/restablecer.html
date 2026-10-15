@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Nueva contraseña — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <form id="form-restablecer" class="tarjeta">
+      <h1>Crea una nueva contraseña</h1>
+      <div id="aviso"></div>
+      <div class="campos">
+        <label class="ancho">Nueva contraseña (mínimo 8 caracteres)<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label class="ancho">Repetir contraseña<input name="password2" type="password" autocomplete="new-password" minlength="8" required></label>
+      </div>
+      <button class="btn bloque" type="submit">Guardar contraseña</button>
+    </form>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Cuidador — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <p><a href="cuidadores.html">← Paseadores y cuidadores</a></p>
+    <div id="aviso-general"></div>
+
+    <div id="contenido" class="oculto">
+      <p class="aviso oculto" id="aviso-inactivo">Tu perfil está oculto: los demás usuarios no lo ven. Actívalo en “Ofrecer mis servicios”.</p>
+      <section class="tarjeta">
+        <div class="cuidador-cabecera grande">
+          <div id="foto"></div>
+          <div>
+            <h1 id="nombre"></h1>
+            <div id="valoracion"></div>
+            <div class="sutil" id="zona"></div>
+          </div>
+        </div>
+        <div class="chips" id="servicios"></div>
+        <p id="tarifa" class="tarifa"></p>
+        <p id="descripcion" class="texto-pre"></p>
+        <dl class="datos-resumen" id="detalles"></dl>
+        <p id="contacto"></p>
+        <button type="button" class="enlace-reporte oculto" id="btn-reportar">🚩 Reportar perfil</button>
+      </section>
+
+      <section class="tarjeta oculto" id="seccion-mensaje">
+        <h2>✉️ Escribirle</h2>
+        <form id="form-mensaje">
+          <p class="sutil">Le llegará a su correo junto con el tuyo para que te responda.</p>
+          <div id="aviso-mensaje"></div>
+          <textarea name="mensaje" required maxlength="1500" placeholder="Ej: Hola, necesito alguien que pasee a mi beagle de lunes a viernes a las 18:00. ¿Tienes disponibilidad?"></textarea>
+          <button class="btn" type="submit" style="margin-top: .75rem">Enviar mensaje</button>
+        </form>
+      </section>
+
+      <section class="tarjeta">
+        <h2>⭐ Reseñas</h2>
+        <form id="form-resena" class="tarjeta oculto">
+          <h3 id="titulo-form-resena">¿Te cuidó a tu mascota? Deja tu reseña</h3>
+          <div id="aviso-resena"></div>
+          <div class="calificar" role="radiogroup" aria-label="Tu calificación">
+            <input type="radio" id="estrella-5" name="estrellas" value="5"><label for="estrella-5" title="5 estrellas">★</label>
+            <input type="radio" id="estrella-4" name="estrellas" value="4"><label for="estrella-4" title="4 estrellas">★</label>
+            <input type="radio" id="estrella-3" name="estrellas" value="3"><label for="estrella-3" title="3 estrellas">★</label>
+            <input type="radio" id="estrella-2" name="estrellas" value="2"><label for="estrella-2" title="2 estrellas">★</label>
+            <input type="radio" id="estrella-1" name="estrellas" value="1"><label for="estrella-1" title="1 estrella">★</label>
+          </div>
+          <label>Comentario<textarea name="comentario" maxlength="1000" placeholder="¿Fue puntual? ¿Cómo trató a tu mascota?"></textarea></label>
+          <div class="acciones" style="margin-top: .75rem">
+            <button class="btn" type="submit">Publicar reseña</button>
+            <button class="btn peligro oculto" type="button" id="btn-borrar-resena">Borrar mi reseña</button>
+          </div>
+        </form>
+        <ul class="lista-resenas" id="resenas"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/cuidador.js"></script>
+</body>
+</html>

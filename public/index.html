@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>MasoPet — Lugares pet-friendly y ficha clínica</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <section class="portada">
+      <img class="logo-grande" src="logo.png" alt="MasoPet">
+      <h1>Sal con tu mascota a donde la reciban bien</h1>
+      <p>MasoPet te muestra en un mapa los restaurantes, cafés, hoteles, parques y tiendas que admiten mascotas, y te ayuda a llevar su ficha clínica y su libro de control al día.</p>
+      <div class="acciones centro">
+        <a class="btn" href="registro.html">Crear cuenta gratis</a>
+        <a class="btn sec" href="login.html">Ya tengo cuenta</a>
+      </div>
+      <div class="contador-usuarios oculto" id="contador-usuarios" aria-live="polite">
+        <span class="contador-numero" id="total-usuarios">0</span>
+        <span class="contador-texto" id="texto-usuarios">personas ya cuidan a sus mascotas con MasoPet 🐾</span>
+      </div>
+    </section>
+
+    <section class="grid-mascotas">
+      <div class="tarjeta">
+        <div class="avatar">🗺️</div>
+        <h2>Mapa pet-friendly</h2>
+        <p class="sutil">Busca lugares por categoría, mira cuáles aceptan perros o gatos y cómo llegar.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">📍</div>
+        <h2>Comparte lugares</h2>
+        <p class="sutil">¿Conoces un lugar que recibe mascotas? Agrégalo al mapa para que otros lo encuentren.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">🩺</div>
+        <h2>Ficha clínica</h2>
+        <p class="sutil">Vacunas, desparasitaciones y consultas en un solo lugar, con recordatorios de próximas dosis.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">📖</div>
+        <h2>Libro de control</h2>
+        <p class="sutil">Anota el día a día de tu mascota: peso, comida, medicamentos, paseos y síntomas, y mira cómo evoluciona.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">🦮</div>
+        <h2>Paseos en compañía</h2>
+        <p class="sutil">Conoce vecinos con mascotas, organiza paseos grupales y coordínense por chat.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">🏠</div>
+        <h2>Adopciones</h2>
+        <p class="sutil">Personas y refugios publican mascotas que buscan hogar, con su ficha de salud.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">🤝</div>
+        <h2>Paseadores y cuidadores</h2>
+        <p class="sutil">Encuentra a alguien de confianza cerca, con reseñas de otros usuarios.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="avatar">📅</div>
+        <h2>Eventos</h2>
+        <p class="sutil">Ferias, vacunaciones gratuitas, encuentros de razas y jornadas de adopción.</p>
+      </div>
+    </section>
+
+    <section class="tarjeta descarga">
+      <div class="qr-caja">
+        <div id="qr" class="qr" role="img" aria-label="Código QR para abrir MasoPet"></div>
+        <a id="qr-url" class="sutil qr-url"></a>
+      </div>
+      <div>
+        <h2>📱 Lleva MasoPet en tu celular</h2>
+        <p>Escanea el código con la cámara de tu celular para abrir la app e instalarla en tu pantalla de inicio. No necesitas pasar por ninguna tienda de aplicaciones.</p>
+        <ol class="pasos">
+          <li><strong>Android (Chrome):</strong> abre el enlace, toca el menú <strong>⋮</strong> y luego <strong>“Instalar aplicación”</strong> o “Agregar a pantalla principal”.</li>
+          <li><strong>iPhone (Safari):</strong> abre el enlace, toca <strong>Compartir</strong> y luego <strong>“Agregar a inicio”</strong>.</li>
+        </ol>
+        <div class="acciones">
+          <a id="btn-apk" class="btn oculto" href="descargas/MasoPet.apk" download>🤖 Descargar app para Android (APK)</a>
+          <button id="btn-instalar" class="btn sec oculto" type="button">⬇️ Instalar en este dispositivo</button>
+        </div>
+        <p class="sutil oculto" id="ayuda-apk">Al abrir el APK, Android te pedirá permitir “instalar apps de origen desconocido” para tu navegador. Es normal: la app no viene de Play Store.</p>
+        <p id="aviso-local" class="sutil oculto">El celular debe estar conectado a la misma red WiFi que este computador.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/portada.js"></script>
+</body>
+</html>

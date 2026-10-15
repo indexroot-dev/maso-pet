@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Recuperar contraseña — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <form id="form-olvide" class="tarjeta">
+      <h1>¿Olvidaste tu contraseña?</h1>
+      <p class="sutil">Escribe el correo con el que te registraste y te enviaremos un enlace para crear una nueva.</p>
+      <div id="aviso"></div>
+      <div class="campos">
+        <label class="ancho">Correo electrónico<input name="email" type="email" autocomplete="email" required></label>
+      </div>
+      <button class="btn bloque" type="submit">Enviar enlace</button>
+      <p class="sutil"><a href="login.html">← Volver a iniciar sesión</a></p>
+    </form>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Ficha clínica — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <p class="no-imprimir"><a href="mascotas.html">← Mis mascotas</a></p>
+    <div id="aviso-general"></div>
+
+    <!-- Datos generales -->
+    <section class="tarjeta">
+      <div class="encabezado">
+        <div class="resumen">
+          <div class="foto-editable">
+            <div id="avatar"></div>
+            <div class="acciones-foto no-imprimir">
+              <label class="btn sec chico" for="input-foto" id="btn-foto">📷 Agregar foto</label>
+              <button class="btn sec chico oculto" type="button" id="btn-quitar-foto" aria-label="Quitar foto">✕</button>
+            </div>
+            <input type="file" id="input-foto" accept="image/*" hidden>
+          </div>
+          <div>
+            <h1 id="titulo">Cargando…</h1>
+            <div class="sutil" id="subtitulo"></div>
+          </div>
+        </div>
+        <div class="acciones">
+          <a class="btn sec chico" id="enlace-libro" href="#">📖 Libro de control</a>
+          <button class="btn sec chico" type="button" onclick="window.print()">🖨️ Imprimir ficha</button>
+          <button class="btn peligro chico" type="button" id="btn-eliminar">Eliminar</button>
+        </div>
+      </div>
+      <dl class="datos-resumen" id="datos"></dl>
+
+      <details id="editar">
+        <summary>Editar datos generales</summary>
+        <form id="form-datos">
+          <div id="aviso-datos"></div>
+          <div class="campos">
+            <label>Nombre *<input name="nombre" required maxlength="100"></label>
+            <label>Especie *
+              <select name="especie" required>
+                <option value="perro">Perro</option>
+                <option value="gato">Gato</option>
+                <option value="ave">Ave</option>
+                <option value="conejo">Conejo</option>
+                <option value="roedor">Roedor</option>
+                <option value="reptil">Reptil</option>
+                <option value="otro">Otro</option>
+              </select>
+            </label>
+            <label>Raza<input name="raza" maxlength="100"></label>
+            <label>Sexo
+              <select name="sexo">
+                <option value="">—</option>
+                <option value="macho">Macho</option>
+                <option value="hembra">Hembra</option>
+              </select>
+            </label>
+            <label>Fecha de nacimiento<input name="fecha_nacimiento" type="date"></label>
+            <label>Color / pelaje<input name="color" maxlength="100"></label>
+            <label>Peso actual (kg)<input name="peso" type="number" step="0.01" min="0"></label>
+            <label>N° de microchip<input name="microchip" maxlength="50"></label>
+            <label>Tamaño
+              <select name="tamano">
+                <option value="">—</option>
+                <option value="pequeno">Pequeño (hasta 10 kg)</option>
+                <option value="mediano">Mediano (10 a 25 kg)</option>
+                <option value="grande">Grande (más de 25 kg)</option>
+              </select>
+            </label>
+            <label>Con otras mascotas
+              <select name="caracter">
+                <option value="">—</option>
+                <option value="sociable">Sociable con otras mascotas</option>
+                <option value="selectivo">Se lleva bien con algunas</option>
+                <option value="timido">Tímido, necesita espacio</option>
+                <option value="no_sociable">Prefiere no juntarse con otras</option>
+              </select>
+            </label>
+            <label class="check"><input name="esterilizado" type="checkbox"> Esterilizado/a</label>
+            <label class="ancho">Alergias<textarea name="alergias" placeholder="Medicamentos, alimentos, etc."></textarea></label>
+            <label class="ancho">Enfermedades o condiciones crónicas<textarea name="condiciones"></textarea></label>
+            <label class="ancho">Notas<textarea name="notas" placeholder="Alimentación, comportamiento, contacto del veterinario…"></textarea></label>
+          </div>
+          <button class="btn" type="submit">Guardar cambios</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- Compartir con el veterinario -->
+    <section class="tarjeta no-imprimir">
+      <h2>🔗 Compartir con el veterinario</h2>
+      <p class="sutil">Crea un enlace temporal de solo lectura con la ficha completa. El veterinario lo abre o escanea el QR, sin crear cuenta. Puedes revocarlo cuando quieras.</p>
+      <div id="aviso-compartir"></div>
+      <div class="acciones">
+        <select id="duracion" aria-label="Duración del enlace" style="width: auto">
+          <option value="1">Válido por 24 horas</option>
+          <option value="7" selected>Válido por 7 días</option>
+          <option value="30">Válido por 30 días</option>
+        </select>
+        <button class="btn" type="button" id="btn-compartir">Crear enlace</button>
+      </div>
+      <div id="enlaces" class="enlaces"></div>
+    </section>
+
+    <!-- Recordatorios -->
+    <section class="tarjeta oculto" id="seccion-recordatorios">
+      <h2>⏰ Próximas dosis</h2>
+      <div id="recordatorios"></div>
+    </section>
+
+    <!-- Vacunas -->
+    <section class="tarjeta">
+      <h2>💉 Vacunas</h2>
+      <div class="tabla-scroll" id="tabla-vacunas"></div>
+      <details>
+        <summary>＋ Registrar vacuna</summary>
+        <form data-seccion="vacunas">
+          <div class="aviso-form"></div>
+          <div class="campos">
+            <label>Vacuna *<input name="nombre" required placeholder="Ej: Antirrábica, Óctuple, Triple felina"></label>
+            <label>Fecha *<input name="fecha" type="date" required></label>
+            <label>Próxima dosis<input name="proxima_fecha" type="date"></label>
+            <label>Veterinario/a<input name="veterinario"></label>
+            <label class="ancho">Notas<input name="notas" placeholder="Lote, laboratorio, reacciones…"></label>
+          </div>
+          <button class="btn" type="submit">Guardar vacuna</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- Desparasitaciones -->
+    <section class="tarjeta">
+      <h2>🪱 Desparasitaciones</h2>
+      <div class="tabla-scroll" id="tabla-desparasitaciones"></div>
+      <details>
+        <summary>＋ Registrar desparasitación</summary>
+        <form data-seccion="desparasitaciones">
+          <div class="aviso-form"></div>
+          <div class="campos">
+            <label>Producto *<input name="producto" required></label>
+            <label>Tipo
+              <select name="tipo">
+                <option value="interna">Interna</option>
+                <option value="externa">Externa (pulgas/garrapatas)</option>
+                <option value="ambas">Interna y externa</option>
+              </select>
+            </label>
+            <label>Fecha *<input name="fecha" type="date" required></label>
+            <label>Próxima dosis<input name="proxima_fecha" type="date"></label>
+            <label class="ancho">Notas<input name="notas"></label>
+          </div>
+          <button class="btn" type="submit">Guardar desparasitación</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- Consultas -->
+    <section class="tarjeta">
+      <h2>🩺 Historial de consultas</h2>
+      <div class="tabla-scroll" id="tabla-consultas"></div>
+      <details>
+        <summary>＋ Registrar consulta</summary>
+        <form data-seccion="consultas">
+          <div class="aviso-form"></div>
+          <div class="campos">
+            <label>Fecha *<input name="fecha" type="date" required></label>
+            <label>Motivo *<input name="motivo" required placeholder="Ej: Control anual, vómitos…"></label>
+            <label>Veterinario/a<input name="veterinario"></label>
+            <label>Peso (kg)<input name="peso" type="number" step="0.01" min="0"></label>
+            <label class="ancho">Diagnóstico<textarea name="diagnostico"></textarea></label>
+            <label class="ancho">Tratamiento / indicaciones<textarea name="tratamiento"></textarea></label>
+          </div>
+          <button class="btn" type="submit">Guardar consulta</button>
+        </form>
+      </details>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/ficha.js"></script>
+</body>
+</html>

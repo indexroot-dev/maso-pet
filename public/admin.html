@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Administración — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor ancho-admin">
+    <h1>🛡️ Panel de administración</h1>
+    <div id="aviso-general"></div>
+
+    <div id="panel-admin" class="oculto">
+      <nav class="pestanas" role="tablist" aria-label="Secciones del panel">
+        <button role="tab" data-pestana="resumen" aria-selected="true">📊 Resumen</button>
+        <button role="tab" data-pestana="reportes" aria-selected="false">🚩 Reportes <span class="contador oculto" id="contador-reportes"></span></button>
+        <button role="tab" data-pestana="usuarios" aria-selected="false">👥 Usuarios</button>
+        <button role="tab" data-pestana="contenido" aria-selected="false">🗂️ Contenido</button>
+      </nav>
+
+      <!-- Resumen -->
+      <section id="pestana-resumen" role="tabpanel">
+        <div class="indicadores" id="indicadores"></div>
+      </section>
+
+      <!-- Reportes -->
+      <section id="pestana-reportes" role="tabpanel" class="oculto">
+        <p class="sutil">Cuando algo recibe 3 reportes de personas distintas se oculta automáticamente hasta que lo revises.
+          <strong>Eliminar</strong> lo borra para siempre; <strong>Mantener</strong> lo vuelve a mostrar y descarta los reportes.</p>
+        <div id="lista-reportes"></div>
+      </section>
+
+      <!-- Usuarios -->
+      <section id="pestana-usuarios" role="tabpanel" class="oculto">
+        <input type="search" id="buscar-usuarios" placeholder="Buscar por nombre o correo…" aria-label="Buscar usuarios">
+        <div class="tabla-scroll tarjeta" style="margin-top: 1rem"><table id="tabla-usuarios"></table></div>
+      </section>
+
+      <!-- Contenido -->
+      <section id="pestana-contenido" role="tabpanel" class="oculto">
+        <div class="barra-admin">
+          <select id="tipo-contenido" aria-label="Tipo de contenido">
+            <option value="lugar">📍 Lugares</option>
+            <option value="resena">⭐ Reseñas</option>
+            <option value="perdida">🚨 Avisos de perdidas</option>
+            <option value="paseo">🦮 Paseos</option>
+            <option value="comentario">💬 Mensajes en paseos</option>
+            <option value="adopcion">🏠 Adopciones</option>
+            <option value="cuidador">🤝 Perfiles de cuidadores</option>
+            <option value="resena_cuidador">⭐ Reseñas a cuidadores</option>
+            <option value="evento">📅 Eventos</option>
+          </select>
+          <input type="search" id="buscar-contenido" placeholder="Buscar…" aria-label="Buscar contenido">
+        </div>
+        <div class="tabla-scroll tarjeta" style="margin-top: 1rem"><table id="tabla-contenido"></table></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Iniciar sesión — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <form id="form-login" class="tarjeta">
+      <h1>Iniciar sesión</h1>
+      <div id="aviso"></div>
+      <div class="campos">
+        <label class="ancho">Correo electrónico<input name="email" type="email" autocomplete="email" required></label>
+        <label class="ancho">Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
+      </div>
+      <p class="olvide"><a href="olvide.html">¿Olvidaste tu contraseña?</a></p>
+      <button class="btn bloque" type="submit">Entrar</button>
+      <p class="sutil">¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
+    </form>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

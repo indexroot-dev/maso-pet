@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Mascotas perdidas — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <div class="encabezado">
+      <div>
+        <h1>🚨 Mascotas perdidas</h1>
+        <p class="sutil">Si ves alguna de estas mascotas, contacta a su tutor. Los avisos también aparecen en el mapa.</p>
+      </div>
+      <button class="btn" id="btn-reportar" type="button">Reportar mascota perdida</button>
+    </div>
+
+    <form id="form-perdida" class="tarjeta oculto">
+      <h2>Reportar mascota perdida</h2>
+      <div id="aviso-perdida"></div>
+      <p class="sutil" id="sin-mascotas" hidden>Primero <a href="mascotas.html">registra a tu mascota</a> (idealmente con foto) para poder publicar el aviso.</p>
+      <div class="campos">
+        <label>Mascota *<select name="mascota_id" id="select-mascota" required></select></label>
+        <label>Fecha en que se perdió *<input name="fecha" type="date" required></label>
+        <label>Teléfono de contacto *<input name="contacto" required maxlength="120" placeholder="+56 9 1234 5678"></label>
+        <label class="ancho">Descripción<textarea name="descripcion" maxlength="1000" placeholder="Collar, señas particulares, si es asustadizo, recompensa…"></textarea></label>
+      </div>
+      <p class="sutil" id="ayuda-mapa">Toca el mapa donde se vio por última vez.</p>
+      <div id="mapa-reporte" class="mapa-chico"></div>
+      <input type="hidden" name="lat">
+      <input type="hidden" name="lng">
+      <div class="acciones" style="margin-top: 1rem">
+        <button class="btn" type="submit">Publicar aviso</button>
+        <button class="btn sec" type="button" id="btn-mi-ubicacion">📍 Usar mi ubicación</button>
+        <button class="btn sec" type="button" id="btn-cancelar">Cancelar</button>
+      </div>
+    </form>
+
+    <section>
+      <h2>Se buscan</h2>
+      <div class="grid-perdidas" id="activos"></div>
+    </section>
+
+    <section id="seccion-reencuentros" class="oculto">
+      <h2>🎉 Volvieron a casa</h2>
+      <div class="grid-perdidas" id="reencuentros"></div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/perdidas.js"></script>
+</body>
+</html>

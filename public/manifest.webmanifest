@@ -1,0 +1,16 @@
+{
+  "name": "MasoPet — Lugares pet-friendly y ficha clínica",
+  "short_name": "MasoPet",
+  "description": "Encuentra lugares que admiten mascotas y lleva la ficha clínica de tu mascota.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f7",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "icons/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

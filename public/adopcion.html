@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Adopción — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <p><a href="adopciones.html">← Adopciones</a></p>
+    <div id="aviso-general"></div>
+
+    <div id="contenido" class="oculto">
+      <section class="tarjeta adopcion-detalle">
+        <div id="foto" class="adopcion-foto grande"></div>
+        <div class="adopcion-datos">
+          <span class="etiqueta" id="estado"></span>
+          <h1 id="nombre"></h1>
+          <div class="sutil" id="resumen"></div>
+          <div class="chips" id="etiquetas"></div>
+          <p id="publicado"></p>
+          <p id="contacto"></p>
+          <div class="acciones" id="acciones-duenio"></div>
+          <button type="button" class="enlace-reporte oculto" id="btn-reportar">🚩 Reportar publicación</button>
+        </div>
+      </section>
+
+      <section class="tarjeta" id="seccion-descripcion">
+        <h2>💛 Sobre mí</h2>
+        <p id="descripcion" class="texto-pre"></p>
+        <div id="bloque-requisitos"><h3>📋 Requisitos para adoptar</h3><p id="requisitos" class="texto-pre"></p></div>
+      </section>
+
+      <section class="tarjeta oculto" id="seccion-salud">
+        <h2>🩺 Ficha de salud</h2>
+        <p class="sutil">Datos de su ficha clínica en MasoPet.</p>
+        <dl class="datos-resumen" id="datos-salud"></dl>
+        <h3>💉 Vacunas</h3>
+        <div class="tabla-scroll" id="tabla-vacunas"></div>
+        <h3>🪱 Desparasitaciones</h3>
+        <div class="tabla-scroll" id="tabla-desparasitaciones"></div>
+      </section>
+
+      <!-- Interesados (otras personas) -->
+      <section class="tarjeta oculto" id="seccion-interes">
+        <h2>🏡 ¿Quieres adoptarme?</h2>
+        <form id="form-interes">
+          <p class="sutil">Tu mensaje llegará por correo a quien publicó, junto con tu correo y teléfono para que te contacte.</p>
+          <div id="aviso-interes"></div>
+          <label>Cuéntale sobre ti *<textarea name="mensaje" required maxlength="1500" placeholder="¿Cómo es tu hogar? ¿Tienes otras mascotas? ¿Por qué quieres adoptar?"></textarea></label>
+          <label style="margin-top: .75rem">Tu teléfono (opcional)<input name="telefono" maxlength="40"></label>
+          <button class="btn" type="submit" style="margin-top: .75rem">💌 Me interesa adoptar</button>
+        </form>
+        <p class="aviso oculto" id="ya-enviado">✅ Ya enviaste tu interés. Quien publicó te contactará.</p>
+      </section>
+
+      <!-- Solicitudes (solo quien publicó) -->
+      <section class="tarjeta oculto" id="seccion-solicitudes">
+        <h2>💌 Personas interesadas</h2>
+        <div id="solicitudes"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/adopcion.js"></script>
+</body>
+</html>

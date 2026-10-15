@@ -1,0 +1,19 @@
+{
+  "name": "maso-pet",
+  "version": "1.0.0",
+  "description": "Mapa de lugares pet-friendly y ficha clínica de mascotas",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "admin": "node scripts/admin.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "nodemailer": "^7.0.13"
+  }
+}

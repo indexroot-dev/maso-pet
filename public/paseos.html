@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Paseos en compañía — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <div class="encabezado">
+      <div>
+        <h1>🦮 Paseos en compañía</h1>
+        <p class="sutil">Encuentra vecinos con mascotas y salgan a pasear juntos.</p>
+      </div>
+      <button class="btn" id="btn-organizar" type="button">＋ Organizar un paseo</button>
+    </div>
+    <p class="aviso consejo">🛡️ Por seguridad, reúnanse siempre en lugares públicos. Nadie ve tu dirección: tu zona se muestra de forma aproximada.</p>
+
+    <nav class="pestanas" role="tablist" aria-label="Secciones de paseos">
+      <button role="tab" data-pestana="paseos" aria-selected="true">📅 Próximos paseos</button>
+      <button role="tab" data-pestana="vecinos" aria-selected="false">🐕 Vecinos cerca</button>
+      <button role="tab" data-pestana="perfil" aria-selected="false">⚙️ Mi perfil de paseo</button>
+    </nav>
+
+    <!-- Próximos paseos -->
+    <section id="pestana-paseos" role="tabpanel">
+      <form id="form-paseo" class="tarjeta oculto">
+        <h2>Organizar un paseo</h2>
+        <div id="aviso-paseo"></div>
+        <div id="invitados" class="invitados oculto"></div>
+        <div class="campos">
+          <label class="ancho">Título *<input name="titulo" required maxlength="120" placeholder="Ej: Paseo largo por el parque"></label>
+          <label>Fecha *<input name="fecha" type="date" required></label>
+          <label>Hora *<input name="hora" type="time" required></label>
+          <label>Cupo máximo<input name="cupo" type="number" min="2" max="50" placeholder="Sin límite"></label>
+          <label class="ancho">Punto de encuentro *
+            <select id="select-lugar"><option value="">Elige un lugar pet-friendly o marca otro punto en el mapa…</option></select>
+          </label>
+          <label class="ancho">Nombre del punto *<input name="punto" required maxlength="150" placeholder="Ej: Entrada principal del parque"></label>
+        </div>
+        <div id="mapa-paseo-nuevo" class="mapa-chico"></div>
+        <p class="sutil" id="ayuda-punto">Toca el mapa para marcar el punto exacto de encuentro.</p>
+        <input type="hidden" name="lat">
+        <input type="hidden" name="lng">
+        <div class="campos">
+          <label class="ancho">Descripción<textarea name="descripcion" maxlength="1000" placeholder="Duración, ritmo, si es para perros tranquilos o juguetones, qué llevar…"></textarea></label>
+          <label class="check ancho"><input name="privado" type="checkbox"> 🔒 Privado: solo lo verán las personas que invites</label>
+        </div>
+        <div class="acciones">
+          <button class="btn" type="submit">Publicar paseo</button>
+          <button class="btn sec" type="button" id="btn-cancelar-paseo">Cancelar</button>
+        </div>
+      </form>
+
+      <div class="barra-admin">
+        <label class="ordenar" style="margin-left: 0">Mostrar paseos a
+          <select class="selector-radio" id="radio-paseos">
+            <option value="1">1 km</option><option value="3">3 km</option><option value="5" selected>5 km</option>
+            <option value="10">10 km</option><option value="20">20 km</option>
+          </select>
+        </label>
+      </div>
+      <div id="sin-origen" class="tarjeta oculto">
+        <p>Para mostrarte paseos cerca, activa tu <a href="#perfil" data-ir="perfil">perfil de paseo</a> o usa tu ubicación actual.</p>
+        <button class="btn sec chico" type="button" id="btn-ubicacion">📍 Usar mi ubicación</button>
+      </div>
+      <div id="lista-paseos" class="lista-paseos"></div>
+    </section>
+
+    <!-- Vecinos -->
+    <section id="pestana-vecinos" role="tabpanel" class="oculto">
+      <div id="vecinos-sin-perfil" class="tarjeta oculto">
+        <p>Para ver a tus vecinos y que ellos te vean, activa tu perfil de paseo. Solo mostramos tu nombre, tus mascotas y una distancia aproximada.</p>
+        <button class="btn" type="button" data-ir="perfil">Activar mi perfil</button>
+      </div>
+      <div id="vecinos-con-perfil">
+        <label class="ordenar" style="margin-left: 0">Vecinos a
+          <select class="selector-radio" id="radio-vecinos">
+            <option value="1">1 km</option><option value="3">3 km</option><option value="5" selected>5 km</option>
+            <option value="10">10 km</option><option value="20">20 km</option>
+          </select>
+        </label>
+        <div id="lista-vecinos" class="grid-vecinos"></div>
+      </div>
+    </section>
+
+    <!-- Mi perfil -->
+    <section id="pestana-perfil" role="tabpanel" class="oculto">
+      <form id="form-perfil" class="tarjeta">
+        <h2>Mi perfil de paseo</h2>
+        <div id="aviso-perfil"></div>
+        <label class="check interruptor"><input type="checkbox" name="activo"> Quiero aparecer para pasear con vecinos</label>
+        <p class="sutil">Si lo desactivas, nadie te verá en "Vecinos cerca" ni podrá invitarte.</p>
+
+        <h3>Tu zona</h3>
+        <p class="sutil">Toca el mapa cerca de donde sueles pasear. Guardamos solo una zona aproximada (unos 1 km), nunca tu dirección.</p>
+        <div id="mapa-zona" class="mapa-chico"></div>
+        <button class="btn sec chico" type="button" id="btn-zona-ubicacion" style="margin-top: .5rem">📍 Usar mi ubicación</button>
+        <input type="hidden" name="lat">
+        <input type="hidden" name="lng">
+
+        <h3>¿Quiénes salen a pasear?</h3>
+        <div id="mis-mascotas" class="elegir-mascotas"></div>
+
+        <h3>¿Cuándo sueles pasear?</h3>
+        <div class="chips">
+          <label class="check chip-check"><input type="checkbox" name="horarios" value="manana"> 🌅 Mañana</label>
+          <label class="check chip-check"><input type="checkbox" name="horarios" value="tarde"> ☀️ Tarde</label>
+          <label class="check chip-check"><input type="checkbox" name="horarios" value="noche"> 🌙 Noche</label>
+        </div>
+
+        <label>Sobre ustedes<textarea name="descripcion" maxlength="500" placeholder="Ej: Paseamos todas las tardes por el Parque Bustamante. Rocky es juguetón y le encanta correr."></textarea></label>
+        <button class="btn" type="submit" style="margin-top: 1rem">Guardar perfil</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/paseos.js"></script>
+</body>
+</html>

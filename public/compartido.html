@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="icons/icono-192.png">
+  <title>Ficha clínica compartida — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav nav-simple">
+    <a class="logo" href="index.html" aria-label="MasoPet"><img src="logo-huella.png" alt=""><span class="maso">MASO</span><span class="pet">PET</span></a>
+    <button class="btn sec chico" type="button" onclick="window.print()">🖨️ Imprimir</button>
+  </header>
+
+  <main class="contenedor">
+    <div id="aviso-general"></div>
+    <div id="contenido" class="oculto">
+      <p class="aviso" id="vigencia"></p>
+
+      <section class="tarjeta">
+        <div class="resumen">
+          <div id="foto"></div>
+          <div>
+            <div class="libro-etiqueta">Ficha clínica</div>
+            <h1 id="titulo"></h1>
+            <div class="sutil" id="subtitulo"></div>
+            <div class="sutil" id="tutor"></div>
+          </div>
+        </div>
+        <dl class="datos-resumen" id="datos"></dl>
+      </section>
+
+      <section class="tarjeta"><h2>💉 Vacunas</h2><div class="tabla-scroll" id="tabla-vacunas"></div></section>
+      <section class="tarjeta"><h2>🪱 Desparasitaciones</h2><div class="tabla-scroll" id="tabla-desparasitaciones"></div></section>
+      <section class="tarjeta"><h2>🩺 Historial de consultas</h2><div class="tabla-scroll" id="tabla-consultas"></div></section>
+      <section class="tarjeta"><h2>📖 Libro de control (últimas anotaciones)</h2><div class="tabla-scroll" id="tabla-libro"></div></section>
+    </div>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/compartido.js"></script>
+</body>
+</html>

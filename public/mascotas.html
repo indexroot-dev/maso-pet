@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Mis mascotas — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <div class="encabezado">
+      <h1>Mis mascotas</h1>
+      <button class="btn" id="btn-nueva" type="button">＋ Nueva mascota</button>
+    </div>
+
+    <form id="form-mascota" class="tarjeta oculto">
+      <h2>Nueva mascota</h2>
+      <div id="aviso"></div>
+      <div class="campos">
+        <label>Nombre *<input name="nombre" required maxlength="100"></label>
+        <label>Especie *
+          <select name="especie" required>
+            <option value="perro">Perro</option>
+            <option value="gato">Gato</option>
+            <option value="ave">Ave</option>
+            <option value="conejo">Conejo</option>
+            <option value="roedor">Roedor</option>
+            <option value="reptil">Reptil</option>
+            <option value="otro">Otro</option>
+          </select>
+        </label>
+        <label>Raza<input name="raza" maxlength="100"></label>
+        <label>Sexo
+          <select name="sexo">
+            <option value="">—</option>
+            <option value="macho">Macho</option>
+            <option value="hembra">Hembra</option>
+          </select>
+        </label>
+        <label>Fecha de nacimiento<input name="fecha_nacimiento" type="date"></label>
+        <label>Peso (kg)<input name="peso" type="number" step="0.01" min="0"></label>
+      </div>
+      <div class="acciones">
+        <button class="btn" type="submit">Crear ficha</button>
+        <button class="btn sec" type="button" id="btn-cancelar">Cancelar</button>
+      </div>
+    </form>
+
+    <div class="grid-mascotas" id="lista"></div>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/mascotas.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Eventos pet-friendly — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor">
+    <div class="encabezado">
+      <div>
+        <h1>📅 Eventos pet-friendly</h1>
+        <p class="sutil">Ferias, vacunaciones gratuitas, encuentros, jornadas de adopción y talleres.</p>
+      </div>
+      <button class="btn" id="btn-publicar" type="button">＋ Publicar evento</button>
+    </div>
+
+    <form id="form-evento" class="tarjeta oculto">
+      <h2>Publicar un evento</h2>
+      <div id="aviso-evento"></div>
+      <div class="campos">
+        <label class="ancho">Título *<input name="titulo" required maxlength="120" placeholder="Ej: Operativo de vacunación antirrábica gratuita"></label>
+        <label>Tipo *<select name="tipo" id="select-tipo" required></select></label>
+        <label>Fecha *<input name="fecha" type="date" required></label>
+        <label>Desde *<input name="hora_inicio" type="time" required></label>
+        <label>Hasta<input name="hora_fin" type="time"></label>
+        <label>Lugar *<input name="lugar" required maxlength="150" placeholder="Ej: Plaza Ñuñoa"></label>
+        <label>Dirección<input name="direccion" maxlength="200"></label>
+        <label>Organiza<input name="organizador" maxlength="120" placeholder="Ej: Municipalidad, refugio, club de raza"></label>
+        <label class="check"><input type="checkbox" name="gratuito" checked> Entrada gratuita</label>
+        <label id="campo-precio" class="oculto">Precio<input name="precio" maxlength="80" placeholder="Ej: $3.000 por mascota"></label>
+        <label class="ancho">Enlace con más información<input name="enlace" type="url" maxlength="300" placeholder="https://…"></label>
+        <label class="ancho">Descripción<textarea name="descripcion" maxlength="2000" placeholder="Qué habrá, qué llevar, requisitos (ej: perros con correa)…"></textarea></label>
+      </div>
+      <p class="sutil" id="ayuda-mapa">Toca el mapa para marcar dónde será el evento.</p>
+      <div id="mapa-evento" class="mapa-chico"></div>
+      <input type="hidden" name="lat"><input type="hidden" name="lng">
+      <div class="acciones" style="margin-top: 1rem">
+        <button class="btn" type="submit">Publicar evento</button>
+        <button class="btn sec" type="button" id="btn-cancelar">Cancelar</button>
+      </div>
+    </form>
+
+    <div class="chips" id="filtros"></div>
+    <div id="lista" class="lista-paseos"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/eventos.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Adopciones — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor ancho-admin">
+    <div class="encabezado">
+      <div>
+        <h1>🏠 Adopciones</h1>
+        <p class="sutil">Mascotas que buscan un hogar, publicadas por personas y refugios.</p>
+      </div>
+      <button class="btn" id="btn-publicar" type="button">＋ Publicar en adopción</button>
+    </div>
+
+    <form id="form-adopcion" class="tarjeta oculto">
+      <h2>Publicar una mascota en adopción</h2>
+      <div id="aviso-adopcion"></div>
+      <label>¿Es una de tus mascotas registradas en MasoPet?
+        <select id="select-mascota" name="mascota_id"><option value="">No, la publico desde cero</option></select>
+      </label>
+      <p class="sutil" id="ayuda-ficha">Si eliges una mascota registrada, los interesados verán su ficha de salud (vacunas, desparasitaciones y condiciones).</p>
+      <div class="campos">
+        <label>Nombre *<input name="nombre" maxlength="80"></label>
+        <label>Especie *<select name="especie" id="select-especie"></select></label>
+        <label>Raza<input name="raza" maxlength="80" placeholder="Ej: Mestizo"></label>
+        <label>Sexo<select name="sexo"><option value="">—</option><option value="macho">Macho</option><option value="hembra">Hembra</option></select></label>
+        <label>Edad aproximada<input name="edad" maxlength="40" placeholder="Ej: 2 años, 6 meses"></label>
+        <label>Tamaño<select name="tamano" id="select-tamano"></select></label>
+        <label>Con otras mascotas<select name="caracter" id="select-caracter"></select></label>
+        <label class="check"><input type="checkbox" name="esterilizado"> Esterilizado/a</label>
+        <label class="check"><input type="checkbox" name="vacunado"> Vacunas al día</label>
+        <label class="ancho">Descripción<textarea name="descripcion" maxlength="2000" placeholder="Personalidad, historia, cómo se lleva con niños u otras mascotas…"></textarea></label>
+        <label class="ancho">Requisitos para adoptar<textarea name="requisitos" maxlength="1000" placeholder="Ej: casa con patio cerrado, compromiso de esterilización, visita de seguimiento…"></textarea></label>
+      </div>
+      <fieldset class="motivos" style="margin-top: 0">
+        <legend>¿Quién publica?</legend>
+        <label class="check"><input type="radio" name="publicador" value="persona" checked> Una persona particular</label>
+        <label class="check"><input type="radio" name="publicador" value="refugio"> Un refugio u organización</label>
+      </fieldset>
+      <div class="campos">
+        <label id="campo-organizacion" class="oculto">Nombre del refugio *<input name="organizacion" maxlength="120"></label>
+        <label>Teléfono o WhatsApp de contacto *<input name="contacto" maxlength="120" placeholder="+56 9 1234 5678"></label>
+        <label>Comuna<input name="comuna" maxlength="80" placeholder="Ej: Ñuñoa"></label>
+        <label>Foto<input type="file" id="input-foto" accept="image/*"></label>
+      </div>
+      <p class="sutil">Zona aproximada (opcional, para que la encuentren personas cercanas): toca el mapa.</p>
+      <div id="mapa-adopcion" class="mapa-chico"></div>
+      <input type="hidden" name="lat"><input type="hidden" name="lng">
+      <div class="acciones" style="margin-top: 1rem">
+        <button class="btn" type="submit">Publicar</button>
+        <button class="btn sec" type="button" id="btn-cancelar">Cancelar</button>
+      </div>
+    </form>
+
+    <nav class="pestanas" role="tablist" aria-label="Estado">
+      <button role="tab" data-estado="" aria-selected="true">🐾 Buscan hogar</button>
+      <button role="tab" data-estado="adoptado" aria-selected="false">🎉 Ya adoptados</button>
+    </nav>
+    <div class="barra-admin">
+      <select id="filtro-especie" aria-label="Filtrar por especie"><option value="">Todas las especies</option></select>
+      <select id="filtro-tamano" aria-label="Filtrar por tamaño"><option value="">Todos los tamaños</option></select>
+      <button class="btn sec chico" type="button" id="btn-cerca">📍 Ordenar por cercanía</button>
+    </div>
+    <div id="lista" class="grid-adopciones"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/comun.js"></script>
+  <script src="js/adopciones.js"></script>
+</body>
+</html>

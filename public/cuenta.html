@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Mi cuenta — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <h1>Mi cuenta</h1>
+    <section class="tarjeta">
+      <div class="sutil">Nombre</div>
+      <p id="nombre" style="margin-top: 0">—</p>
+      <div class="sutil">Correo</div>
+      <p id="email" style="margin: 0">—</p>
+    </section>
+
+    <section class="tarjeta">
+      <h2>✉️ Recordatorios por correo</h2>
+      <p class="sutil">Te avisamos por correo 7 días antes de que toque una vacuna o desparasitación de tus mascotas.</p>
+      <div id="aviso-recordatorios"></div>
+      <label class="check interruptor"><input type="checkbox" id="chk-recordatorios"> Recibir recordatorios</label>
+      <button class="btn sec chico" id="btn-prueba" type="button" style="margin-top: .75rem">Enviarme un correo de prueba</button>
+    </section>
+
+    <form class="tarjeta" id="form-password">
+      <h2>🔒 Cambiar contraseña</h2>
+      <div id="aviso-password"></div>
+      <div class="campos">
+        <label class="ancho">Contraseña actual<input name="actual" type="password" autocomplete="current-password" required></label>
+        <label class="ancho">Nueva contraseña (mínimo 8 caracteres)<input name="nueva" type="password" autocomplete="new-password" minlength="8" required></label>
+        <label class="ancho">Repetir nueva contraseña<input name="nueva2" type="password" autocomplete="new-password" minlength="8" required></label>
+      </div>
+      <button class="btn" type="submit">Cambiar contraseña</button>
+    </form>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/cuenta.js"></script>
+</body>
+</html>
