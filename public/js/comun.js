@@ -7,7 +7,7 @@ async function api(url, opciones = {}) {
     body: opciones.body ? JSON.stringify(opciones.body) : undefined,
   });
   const datos = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok) throw new Error(datos?.error || 'Ocurrió un error, intenta nuevamente');
+  if (!res.ok) throw Object.assign(new Error(datos?.error || 'Ocurrió un error, intenta nuevamente'), { datos });
   return datos;
 }
 
@@ -131,7 +131,7 @@ function estrellas(valor) {
   return `<span class="estrellas" aria-label="${valor || 0} de 5 estrellas">${'★'.repeat(llenas)}<span class="vacias">${'★'.repeat(5 - llenas)}</span></span>`;
 }
 
-const PAGINAS_COMUNIDAD = ['paseos.html', 'paseo.html', 'perdidas.html', 'adopciones.html', 'adopcion.html', 'cuidadores.html', 'cuidador.html', 'eventos.html'];
+const PAGINAS_COMUNIDAD = ['paseos.html', 'paseo.html', 'perdidas.html', 'adopciones.html', 'adopcion.html', 'cuidadores.html', 'cuidador.html', 'eventos.html', 'apoyar.html'];
 
 // Cierra el menú "Comunidad" al hacer clic fuera
 document.addEventListener('click', (e) => {
@@ -150,8 +150,7 @@ async function iniciarNav() {
     <a class="logo" href="index.html" aria-label="MasoPet, inicio"><img src="logo-huella.png" alt=""><span class="maso">MASO</span><span class="pet">PET</span></a>
     <nav>
       ${usuario
-        ? `${enlace('mapa.html', 'Mapa')}
-           ${enlace('mascotas.html', 'Mis mascotas')}
+        ? `${enlace('mascotas.html', 'Mis mascotas')}
            <details class="menu-comunidad">
              <summary class="${PAGINAS_COMUNIDAD.includes(pagina) ? 'activo' : ''}">Comunidad</summary>
              <div class="submenu">
@@ -160,9 +159,13 @@ async function iniciarNav() {
                ${enlace('adopciones.html', '🏠 Adopciones')}
                ${enlace('cuidadores.html', '🤝 Paseadores y cuidadores')}
                ${enlace('eventos.html', '📅 Eventos')}
+               ${enlace('apoyar.html', '💚 Apoyar MasoPet')}
+               <div id="redes-menu"></div>
              </div>
            </details>
+           ${enlace('mapa.html', 'Mapa')}
            ${usuario.rol === 'admin' ? enlace('admin.html', '🛡️ Admin') : ''}
+           <a href="notificaciones.html" class="campana ${pagina === 'notificaciones.html' ? 'activo' : ''}" aria-label="Notificaciones">🔔<span class="globo oculto" id="globo-notificaciones"></span></a>
            ${enlace('cuenta.html', `👤 ${esc(usuario.nombre.split(' ')[0])}`)}
            <button id="btn-salir" type="button">Salir</button>`
         : `${enlace('login.html', 'Iniciar sesión')}
@@ -173,8 +176,42 @@ async function iniciarNav() {
     await api('/api/auth/logout', { method: 'POST' });
     location.href = 'index.html';
   });
+  if (usuario) {
+    pintarGloboNotificaciones(usuario.no_leidas);
+    enlacesPublicos.then((e) => pintarRedes(document.getElementById('redes-menu'), e, 'menu')).catch(() => {});
+  }
   return usuario;
 }
+
+// ---------- Redes sociales (TikTok, Instagram) ----------
+// Los enlaces los configura el administrador en el panel; si no hay ninguno no se muestra nada.
+const enlacesPublicos = api('/api/enlaces').catch(() => ({}));
+const REDES_SOCIALES = { tiktok: { nombre: 'TikTok', icono: '🎵' }, instagram: { nombre: 'Instagram', icono: '📷' } };
+
+function pintarRedes(contenedor, enlaces, estilo = 'botones') {
+  if (!contenedor) return false;
+  const redes = Object.entries(REDES_SOCIALES).filter(([red]) => enlaces?.[red]);
+  contenedor.innerHTML = redes.map(([red, { nombre, icono }]) => estilo === 'menu'
+    ? `<a href="${esc(enlaces[red])}" target="_blank" rel="noopener">${icono} Síguenos en ${nombre}</a>`
+    : `<a class="btn btn-red ${red}" href="${esc(enlaces[red])}" target="_blank" rel="noopener">${icono} Síguenos en ${nombre}</a>`).join('');
+  return redes.length > 0;
+}
+
+// ---------- Notificaciones (campanita del menú) ----------
+function pintarGloboNotificaciones(cantidad) {
+  const globo = document.getElementById('globo-notificaciones');
+  if (!globo) return;
+  globo.textContent = cantidad > 9 ? '9+' : cantidad;
+  globo.classList.toggle('oculto', !cantidad);
+  document.querySelector('.campana')?.setAttribute('aria-label', cantidad ? `Notificaciones (${cantidad} sin leer)` : 'Notificaciones');
+}
+
+// Revisa cada minuto si llegó algo nuevo (solo con la página a la vista)
+setInterval(async () => {
+  if (document.hidden || !document.getElementById('globo-notificaciones')) return;
+  const datos = await api('/api/notificaciones/contador').catch(() => null);
+  if (datos) pintarGloboNotificaciones(datos.no_leidas);
+}, 60000);
 
 // ---------- Reportar contenido ----------
 const MOTIVOS_REPORTE = {
@@ -237,4 +274,10 @@ const usuarioActual = iniciarNav();
 // Permite instalar MasoPet como app en el celular o computador
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+// Imprimir o guardar como PDF. En la app de Android window.print() no funciona y se usa el diálogo de Android.
+function imprimir() {
+  if (window.MasoPetAndroid) window.MasoPetAndroid.imprimir(document.title);
+  else window.print();
 }

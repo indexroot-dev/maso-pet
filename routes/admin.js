@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { MOTIVOS, TIPOS, vistaPrevia, eliminarObjeto, mantenerObjeto } from '../moderacion.js';
 import { requiereAdmin } from './auth.js';
+import { leerAjustes, guardarAjuste, enlaceValido, enlaceRed, rutValido, BANCOS, TIPOS_CUENTA } from '../ajustes.js';
 
 export const adminRouter = Router();
 adminRouter.use(requiereAdmin);
@@ -29,6 +30,39 @@ adminRouter.get('/resumen', (req, res) => {
     reportes_pendientes: contar("SELECT COUNT(DISTINCT tipo || ':' || objeto_id) AS n FROM reportes WHERE estado = 'pendiente'"),
     ocultos: ['lugares', 'resenas', 'perdidas', 'paseos', 'paseo_comentarios', 'adopciones', 'perfiles_cuidador', 'resenas_cuidador', 'eventos'].reduce((s, t) => s + contar(`SELECT COUNT(*) AS n FROM ${t} WHERE oculto = 1`), 0),
   });
+});
+
+// ---------- Ajustes (donaciones y redes sociales) ----------
+adminRouter.get('/ajustes', (req, res) => res.json(leerAjustes()));
+
+adminRouter.put('/ajustes', (req, res) => {
+  const url = String(req.body?.donaciones_url || '').trim();
+  if (url && !enlaceValido(url)) return res.status(400).json({ error: 'El enlace de donación debe empezar con https:// (cópialo completo desde tu página de donaciones)' });
+  const tiktok = enlaceRed('tiktok', req.body?.tiktok_url);
+  if (tiktok === null) return res.status(400).json({ error: 'El enlace de TikTok no es válido. Pega el enlace de tu perfil o solo tu usuario (ej: @masopet).' });
+  const instagram = enlaceRed('instagram', req.body?.instagram_url);
+  if (instagram === null) return res.status(400).json({ error: 'El enlace de Instagram no es válido. Pega el enlace de tu perfil o solo tu usuario (ej: @masopet).' });
+
+  // Transferencia: si hay número de cuenta, se piden los demás datos para que la persona pueda transferir
+  const t = Object.fromEntries(['banco', 'tipo', 'numero', 'titular', 'rut', 'correo'].map((c) => [c, String(req.body?.[`transferencia_${c}`] || '').trim()]));
+  t.numero = t.numero.replace(/\s/g, '');
+  if (t.numero) {
+    if (!/^[\d-]{4,30}$/.test(t.numero)) return res.status(400).json({ error: 'El número de cuenta solo puede tener números (y guiones)' });
+    if (!BANCOS.includes(t.banco)) return res.status(400).json({ error: 'Elige el banco' });
+    if (!TIPOS_CUENTA.includes(t.tipo)) return res.status(400).json({ error: 'Elige el tipo de cuenta' });
+    if (!t.titular) return res.status(400).json({ error: 'Escribe el nombre del titular de la cuenta' });
+    t.rut = rutValido(t.rut);
+    if (!t.rut) return res.status(400).json({ error: 'El RUT del titular no es válido (revisa el dígito verificador)' });
+    if (t.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.correo)) return res.status(400).json({ error: 'El correo para el comprobante no es válido' });
+  } else {
+    for (const c of Object.keys(t)) t[c] = ''; // sin número de cuenta no se muestra nada
+  }
+
+  guardarAjuste('donaciones_url', url);
+  for (const [c, valor] of Object.entries(t)) guardarAjuste(`transferencia_${c}`, valor);
+  guardarAjuste('tiktok_url', tiktok);
+  guardarAjuste('instagram_url', instagram);
+  res.json(leerAjustes());
 });
 
 // ---------- Reportes (agrupados por contenido) ----------
@@ -74,7 +108,7 @@ adminRouter.post('/reportes/:tipo/:id', (req, res) => {
 adminRouter.get('/usuarios', (req, res) => {
   const q = `%${String(req.query.q || '').slice(0, 100)}%`;
   res.json(db.prepare(`
-    SELECT u.id, u.nombre, u.email, u.rol, u.bloqueado, u.creado_en,
+    SELECT u.id, u.nombre, u.email, u.rol, u.bloqueado, u.verificado, u.creado_en,
       (SELECT COUNT(*) FROM mascotas WHERE usuario_id = u.id) AS mascotas,
       (SELECT COUNT(*) FROM lugares WHERE creado_por = u.id) AS lugares,
       (SELECT COUNT(*) FROM resenas WHERE usuario_id = u.id) AS resenas,
@@ -110,6 +144,11 @@ adminRouter.put('/usuarios/:id', (req, res) => {
   if (req.body?.bloqueado !== undefined) {
     db.prepare('UPDATE usuarios SET bloqueado = ? WHERE id = ?').run(req.body.bloqueado ? 1 : 0, usuario.id);
     if (req.body.bloqueado) db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').run(usuario.id);
+  }
+  // Por si a alguien no le llega el correo con el código
+  if (req.body?.verificado) {
+    db.prepare('UPDATE usuarios SET verificado = 1 WHERE id = ?').run(usuario.id);
+    db.prepare('DELETE FROM verificaciones WHERE usuario_id = ?').run(usuario.id);
   }
   if (req.body?.rol !== undefined) {
     if (!['usuario', 'admin'].includes(req.body.rol)) return res.status(400).json({ error: 'Rol no válido' });

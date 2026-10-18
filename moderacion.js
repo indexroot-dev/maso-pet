@@ -1,6 +1,7 @@
 import { db } from './db.js';
 import { urlPublica } from './config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from './correo.js';
+import { borrarFoto } from './fotos.js';
 
 // Reportes de personas distintas necesarios para ocultar algo automáticamente
 export const UMBRAL_OCULTAR = 3;
@@ -18,7 +19,8 @@ export const TIPOS = {
   lugar: {
     nombre: 'Lugar',
     tabla: 'lugares',
-    vista: `SELECT l.id, l.nombre AS titulo, l.descripcion AS texto, l.categoria AS extra, l.oculto,
+    conFoto: true,
+    vista: `SELECT l.id, l.nombre AS titulo, l.descripcion AS texto, l.categoria AS extra, l.oculto, l.foto,
               u.id AS autor_id, u.nombre AS autor, u.email AS autor_email
             FROM lugares l LEFT JOIN usuarios u ON u.id = l.creado_por WHERE l.id = ?`,
   },
@@ -53,6 +55,7 @@ export const TIPOS = {
   adopcion: {
     nombre: 'Publicación de adopción',
     tabla: 'adopciones',
+    conFoto: true,
     vista: `SELECT a.id, 'En adopción: ' || a.nombre AS titulo, a.descripcion AS texto, a.contacto AS extra, a.oculto, a.foto,
               u.id AS autor_id, u.nombre AS autor, u.email AS autor_email
             FROM adopciones a JOIN usuarios u ON u.id = a.usuario_id WHERE a.id = ?`,
@@ -60,6 +63,7 @@ export const TIPOS = {
   cuidador: {
     nombre: 'Perfil de cuidador/paseador',
     tabla: 'perfiles_cuidador',
+    conFoto: true,
     clave: 'usuario_id',
     vista: `SELECT c.usuario_id AS id, 'Cuidador: ' || u.nombre AS titulo, c.descripcion AS texto, c.tarifa AS extra, c.oculto, c.foto,
               u.id AS autor_id, u.nombre AS autor, u.email AS autor_email
@@ -86,8 +90,11 @@ const clave = (tipo) => TIPOS[tipo].clave || 'id';
 export const vistaPrevia = (tipo, id) => db.prepare(TIPOS[tipo].vista).get(id);
 
 export function eliminarObjeto(tipo, id) {
+  // conFoto: la foto es propia de esa tabla (la de un aviso de perdida es de la mascota y no se borra)
+  const foto = TIPOS[tipo].conFoto && db.prepare(`SELECT foto FROM ${TIPOS[tipo].tabla} WHERE ${clave(tipo)} = ?`).get(id)?.foto;
   db.prepare(`DELETE FROM ${TIPOS[tipo].tabla} WHERE ${clave(tipo)} = ?`).run(id);
   db.prepare("UPDATE reportes SET estado = 'resuelto', resuelto_en = datetime('now') WHERE tipo = ? AND objeto_id = ? AND estado = 'pendiente'").run(tipo, id);
+  borrarFoto(foto);
 }
 
 export function mantenerObjeto(tipo, id) {

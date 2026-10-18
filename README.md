@@ -2,20 +2,23 @@
 
 Aplicación web para:
 
-- **Encontrar lugares pet-friendly** en un mapa (restaurantes, cafés, hoteles, parques, playas, tiendas, veterinarias): filtrar por categoría, buscar, ordenar por cercanía o por valoración y ver cómo llegar.
+- **Encontrar lugares pet-friendly** en un mapa (restaurantes, cafés, hoteles, parques, playas, tiendas, veterinarias): filtrar por categoría, buscar, ir a una comuna o dirección, ordenar por cercanía o por valoración y ver cómo llegar. Cada lugar puede tener foto y horario, y quien lo agregó puede editarlo.
 - **Reseñas y estrellas** de cada lugar, y **lugares favoritos**.
 - **Mascotas perdidas**: avisos con foto, contacto y el lugar donde se vio por última vez, también visibles en el mapa.
 - **Ficha clínica** de cada mascota, con foto: datos generales, vacunas, desparasitaciones y consultas, con recordatorios de próximas dosis.
 - **Compartir la ficha con el veterinario** mediante un enlace o QR temporal de solo lectura (no necesita cuenta).
 - **Libro de control**: anotaciones del día a día (peso, alimentación, medicamentos, paseos, síntomas…) y gráfico de evolución del peso.
 - **Recordatorios por correo** 7 días antes de cada vacuna o desparasitación.
-- **Cuentas de usuario** con recuperación y cambio de contraseña. El mapa y las fichas son solo para usuarios registrados.
+- **Cuentas de usuario** con verificación del correo por código de 6 números (vence en 15 minutos, 5 intentos), recuperación y cambio de contraseña, cambio de nombre, descarga de todos los datos propios (JSON) y eliminación de la cuenta. El mapa y las fichas son solo para usuarios registrados.
+- **Notificaciones** en la app (campanita del menú): invitaciones y mensajes de paseos, solicitudes de adopción, reseñas recibidas, próximas dosis y mascotas perdidas a menos de 5 km de la zona elegida en "Mi cuenta" (este último también por correo).
 - **Paseos en compañía**: perfil de paseo opcional con zona aproximada (~1 km), vecinos cercanos con sus mascotas (tamaño y carácter), paseos grupales públicos o privados con cupo, invitaciones y conversación de cada paseo. Avisos por correo al invitar, al unirse y al cancelar.
 - **Adopciones**: personas y refugios publican mascotas en adopción (con su ficha de salud si están registradas); los interesados envían una solicitud que llega por correo; estados disponible, en proceso y adoptado.
 - **Paseadores y cuidadores**: perfiles de servicios (paseos, cuidado, visitas, guardería) con tarifa, zona aproximada y cobertura; búsqueda por cercanía o valoración, mensajes por correo y reseñas con estrellas.
 - **Eventos pet-friendly**: ferias, vacunaciones, encuentros, jornadas de adopción y talleres, con filtro por tipo y botón "Asistiré".
 - **Reportes y moderación**: los usuarios reportan cualquier contenido publicado; con 3 reportes el contenido se oculta solo hasta que un administrador lo revise.
-- **Panel de administración**: resumen de la app, revisión de reportes, gestión de usuarios (bloquear, nombrar administradores, borrar su contenido) y de todo el contenido publicado.
+- **Panel de administración**: resumen de la app, revisión de reportes, gestión de usuarios (bloquear, nombrar administradores, borrar su contenido), de todo el contenido publicado y ajustes (enlace de donaciones y redes sociales).
+- **Apoyar MasoPet**: página pública con el botón de donación y los datos para transferencia (banco, por defecto BancoEstado, tipo y número de cuenta, titular, RUT validado y correo, cada uno con botón para copiar) que el administrador configura en el panel.
+- **Síguenos en TikTok e Instagram**: botones en la portada, en Apoyar MasoPet y en el menú Comunidad (aparecen solo si el administrador configuró la red).
 
 ## Requisitos
 
@@ -68,6 +71,7 @@ routes/cuidadores.js   Perfiles de paseadores/cuidadores, búsqueda, mensajes y 
 routes/eventos.js      Eventos pet-friendly y asistencia
 routes/reportes.js     Reportar contenido
 routes/admin.js        API del panel de administración
+notificaciones.js      Notificaciones de la campanita y avisos de mascotas perdidas cerca
 moderacion.js          Reglas de reportes: motivos, ocultado automático, eliminar/mantener
 scripts/admin.js       Nombrar administrador desde la terminal
 public/                Páginas web
@@ -77,13 +81,20 @@ public/                Páginas web
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/api/auth/registro` · `/login` · `/logout` | Cuenta y sesión |
+| POST | `/api/auth/registro` · `/login` · `/logout` | Cuenta y sesión (registro y login de una cuenta sin verificar responden `{verificar: true}` y envían un código) |
+| POST | `/api/auth/verificar` · `/reenviar-codigo` | Verificar el correo `{email, codigo}` (inicia sesión) · pedir otro código |
 | GET | `/api/auth/me` | Usuario actual |
 | POST | `/api/auth/olvide` · `/restablecer` | Recuperar contraseña por correo |
 | PUT | `/api/auth/password` · `/preferencias` | Cambiar contraseña · activar/desactivar recordatorios |
 | POST | `/api/auth/recordatorio-prueba` | Enviar un correo de recordatorio de prueba |
+| DELETE | `/api/auth/cuenta` | Eliminar la cuenta y todos sus datos `{password}` |
+| PUT | `/api/cuenta/nombre` | Cambiar el nombre |
+| GET/PUT | `/api/cuenta/zona` | Mi zona aproximada para avisos de mascotas perdidas cerca `{lat, lng, avisos_cerca}` |
+| GET | `/api/cuenta/mis-datos` | Descargar todos mis datos (archivo JSON) |
+| GET/DELETE | `/api/notificaciones` | Mis notificaciones / borrarlas todas |
+| GET · POST | `/api/notificaciones/contador` · `/api/notificaciones/leidas` | Cantidad sin leer · marcar todas como leídas |
 | GET/POST | `/api/lugares?categoria=&q=&favoritos=1` | Listar (con promedio de estrellas) / agregar lugar |
-| DELETE | `/api/lugares/:id` | Eliminar un lugar propio |
+| PUT/DELETE | `/api/lugares/:id` | Editar (`imagen`, `quitar_foto`, `horario`) / eliminar un lugar propio |
 | GET/PUT/DELETE | `/api/lugares/:id/resenas` | Ver reseñas / publicar o editar la propia / borrarla |
 | PUT/DELETE | `/api/lugares/:id/favorito` | Guardar / quitar de favoritos |
 | GET/POST | `/api/mascotas` | Listar / crear mascotas |
@@ -115,10 +126,12 @@ public/                Páginas web
 | POST | `/api/reportes` | Reportar `{tipo, objeto_id, motivo, detalle}` (tipo: lugar, resena, perdida, paseo, comentario, adopcion, cuidador, resena_cuidador o evento) |
 | GET | `/api/admin/resumen` · `/reportes` · `/usuarios?q=` · `/contenido/:tipo?q=` | Panel (solo administradores) |
 | POST | `/api/admin/reportes/:tipo/:id` | `{accion: eliminar|mantener}` |
-| PUT/DELETE | `/api/admin/usuarios/:id` · `/api/admin/usuarios/:id/contenido` | Bloquear / cambiar rol · borrar su contenido público |
+| PUT/DELETE | `/api/admin/usuarios/:id` · `/api/admin/usuarios/:id/contenido` | Bloquear / cambiar rol / verificar a mano · borrar su contenido público |
 | DELETE | `/api/admin/contenido/:tipo/:id` | Eliminar contenido |
+| GET/PUT | `/api/admin/ajustes` | Enlace de donaciones (solo https), transferencia (`transferencia_banco`, `_tipo`, `_numero`, `_titular`, `_rut`, `_correo`) y redes (`tiktok_url`, `instagram_url`: enlace o @usuario) |
+| GET | `/api/enlaces` | Donaciones y redes sociales (pública) |
 
-Todas las rutas, salvo registro, login, recuperar contraseña y la ficha compartida, requieren sesión.
+Todas las rutas, salvo registro, login, verificación del correo, recuperar contraseña, la ficha compartida y las donaciones, requieren sesión.
 
 ## Notas
 

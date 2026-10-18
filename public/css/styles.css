@@ -471,3 +471,60 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .contador-usuarios { flex-direction: column; border-radius: var(--radio); padding: .75rem 1rem; gap: .4rem; }
   .contador-texto { text-align: center; }
 }
+
+/* ---------- Notificaciones ---------- */
+.nav nav a.campana { position: relative; font-size: 1.1rem; }
+.globo {
+  position: absolute; top: 0; right: 0; min-width: 18px; height: 18px; padding: 0 4px;
+  border-radius: 9px; background: var(--rojo); color: #fff; font-size: .7rem; font-weight: 700; line-height: 18px; text-align: center;
+}
+.lista-notificaciones { list-style: none; padding: 0; margin: 0; }
+.lista-notificaciones li { border-bottom: 1px solid var(--borde); }
+.lista-notificaciones li > a, .lista-notificaciones li > div { display: flex; flex-direction: column; gap: .15rem; padding: .75rem .5rem; color: var(--texto); text-decoration: none; border-radius: 8px; }
+.lista-notificaciones li > a:hover { background: var(--verde-claro); }
+.lista-notificaciones li.nueva > a, .lista-notificaciones li.nueva > div { background: var(--verde-claro); font-weight: 600; }
+
+/* ---------- Lugares: foto e ir a una zona ---------- */
+.foto-lugar { width: 100%; max-height: 220px; object-fit: cover; border-radius: var(--radio); margin-top: .75rem; display: block; }
+.foto-lugar.chica { max-height: 120px; width: auto; max-width: 100%; margin: .25rem 0 .5rem; }
+.popup-foto { width: 100%; max-height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: .4rem; }
+.buscar-zona { display: flex; gap: .5rem; margin-bottom: .5rem; }
+.resultados-zona { list-style: none; padding: 0; margin: 0 0 .75rem; border: 1px solid var(--borde); border-radius: 8px; background: var(--blanco); }
+.resultados-zona li + li { border-top: 1px solid var(--borde); }
+.resultados-zona button { width: 100%; text-align: left; background: none; border: 0; padding: .55rem .7rem; font: inherit; font-size: .9rem; cursor: pointer; color: var(--texto); }
+.resultados-zona button:hover { background: var(--verde-claro); }
+.resultados-zona .vacio { padding: .55rem .7rem; }
+.zona-activa { background: var(--verde-claro); border-radius: 8px; padding: .4rem .7rem; margin-bottom: .75rem; font-size: .9rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.marcador.zona { border-color: var(--verde); }
+#buscar { margin-bottom: .5rem; }
+
+/* ---------- Apoyar MasoPet ---------- */
+.apoyar { text-align: center; }
+.apoyar-icono { font-size: 3rem; line-height: 1; margin-bottom: .5rem; }
+.apoyar .btn.bloque { margin: 1rem 0; font-size: 1.05rem; padding: .8rem 1rem; }
+.transferencia { text-align: left; background: var(--fondo); border: 1px solid var(--borde); border-radius: var(--radio); padding: 1rem; margin-top: 1rem; }
+.transferencia h2 { font-size: 1rem; }
+.transferencia pre { font: inherit; white-space: pre-wrap; margin: 0 0 .75rem; }
+.apoyar-portada { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.apoyar-portada h2, .apoyar-portada p { margin: 0; }
+
+/* ---------- Redes sociales ---------- */
+.siguenos { text-align: center; }
+.redes { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.btn-red { color: #fff; border: 0; }
+.btn-red.tiktok { background: #111; }
+.btn-red.tiktok:hover { background: #333; }
+.btn-red.instagram { background: linear-gradient(45deg, #f58529, #dd2a7b 50%, #8134af); }
+.btn-red.instagram:hover { filter: brightness(1.08); }
+#redes-menu:not(:empty) { border-top: 1px solid var(--borde); margin-top: .25rem; padding-top: .25rem; }
+
+/* ---------- Verificar el correo ---------- */
+.input-codigo { font-size: 1.6rem; letter-spacing: .5em; text-align: center; font-weight: 700; padding: .6rem; }
+.enlace-boton { background: none; border: 0; padding: 0; font: inherit; color: var(--verde); text-decoration: underline; cursor: pointer; }
+.enlace-boton:disabled { color: var(--gris); text-decoration: none; cursor: default; }
+.etiqueta.pendiente { background: var(--ambar-claro); color: var(--ambar); }
+.datos-banco { margin: 0 0 .75rem; }
+.datos-banco > div { display: flex; justify-content: space-between; gap: .75rem; padding: .4rem 0; border-bottom: 1px solid var(--borde); }
+.datos-banco dt { color: var(--gris); font-size: .9rem; }
+.datos-banco dd { margin: 0; display: flex; gap: .6rem; align-items: baseline; font-weight: 600; text-align: right; }
+.datos-banco .enlace-boton { font-size: .8rem; font-weight: 400; }

@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { requiereLogin } from './auth.js';
+import { guardarFoto, borrarFoto } from '../fotos.js';
+import { notificar } from '../notificaciones.js';
+import { nombreCorto } from '../config.js';
 
 export const CATEGORIAS = ['restaurante', 'cafe', 'hotel', 'parque', 'playa', 'tienda', 'veterinaria', 'otro'];
 const ADMITIDAS = ['todas', 'perros', 'gatos'];
@@ -22,7 +25,7 @@ export const lugaresRouter = Router();
 lugaresRouter.use(requiereLogin);
 
 function lugarExiste(req, res) {
-  const lugar = db.prepare('SELECT id FROM lugares WHERE id = ? AND oculto = 0').get(Number(req.params.id));
+  const lugar = db.prepare('SELECT id, nombre, creado_por FROM lugares WHERE id = ? AND oculto = 0').get(Number(req.params.id));
   if (!lugar) res.status(404).json({ error: 'Lugar no encontrado' });
   return lugar;
 }
@@ -47,31 +50,69 @@ lugaresRouter.get('/', (req, res) => {
   res.json(db.prepare(`${SELECT_LUGAR} ${where} ORDER BY l.nombre`).all(...params));
 });
 
-lugaresRouter.post('/', (req, res) => {
-  const nombre = texto(req.body?.nombre, 120);
-  const categoria = req.body?.categoria;
-  const admitidas = ADMITIDAS.includes(req.body?.mascotas_admitidas) ? req.body.mascotas_admitidas : 'todas';
-  const lat = Number(req.body?.lat);
-  const lng = Number(req.body?.lng);
+// Valida los datos del formulario de lugar. Devuelve { error } o { datos }
+function datosLugar(body) {
+  const datos = {
+    nombre: texto(body?.nombre, 120),
+    categoria: body?.categoria,
+    mascotas_admitidas: ADMITIDAS.includes(body?.mascotas_admitidas) ? body.mascotas_admitidas : 'todas',
+    direccion: texto(body?.direccion, 200),
+    descripcion: texto(body?.descripcion, 1000),
+    horario: texto(body?.horario, 200),
+    lat: Number(body?.lat),
+    lng: Number(body?.lng),
+  };
+  if (!datos.nombre) return { error: 'El nombre es obligatorio' };
+  if (!CATEGORIAS.includes(datos.categoria)) return { error: 'Categoría no válida' };
+  if (!Number.isFinite(datos.lat) || !Number.isFinite(datos.lng) || Math.abs(datos.lat) > 90 || Math.abs(datos.lng) > 180) {
+    return { error: 'Selecciona la ubicación en el mapa' };
+  }
+  return { datos };
+}
+const COLUMNAS_LUGAR = ['nombre', 'categoria', 'mascotas_admitidas', 'direccion', 'descripcion', 'horario', 'lat', 'lng'];
+const FOTO_INVALIDA = 'La foto no es válida (usa JPG, PNG o WebP de menos de 3 MB)';
 
-  if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
-  if (!CATEGORIAS.includes(categoria)) return res.status(400).json({ error: 'Categoría no válida' });
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-    return res.status(400).json({ error: 'Selecciona la ubicación en el mapa' });
+lugaresRouter.post('/', (req, res) => {
+  const { error, datos } = datosLugar(req.body);
+  if (error) return res.status(400).json({ error });
+  let foto = null;
+  if (req.body?.imagen) {
+    foto = guardarFoto(req.body.imagen);
+    if (!foto) return res.status(400).json({ error: FOTO_INVALIDA });
   }
 
   const { lastInsertRowid } = db.prepare(`
-    INSERT INTO lugares (nombre, categoria, direccion, descripcion, mascotas_admitidas, lat, lng, creado_por)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(nombre, categoria, texto(req.body.direccion, 200), texto(req.body.descripcion, 1000), admitidas, lat, lng, req.usuario.id);
+    INSERT INTO lugares (${COLUMNAS_LUGAR.join(', ')}, foto, creado_por) VALUES (${COLUMNAS_LUGAR.map(() => '?').join(', ')}, ?, ?)
+  `).run(...COLUMNAS_LUGAR.map((c) => datos[c]), foto, req.usuario.id);
 
   res.status(201).json(db.prepare(`${SELECT_LUGAR} WHERE l.id = ?`).get(req.usuario.id, lastInsertRowid));
 });
 
+// Solo quien lo agregó puede editarlo. imagen: foto nueva; quitar_foto: true para borrarla
+lugaresRouter.put('/:id', (req, res) => {
+  const lugar = db.prepare('SELECT id, foto FROM lugares WHERE id = ? AND creado_por = ?').get(Number(req.params.id), req.usuario.id);
+  if (!lugar) return res.status(404).json({ error: 'Lugar no encontrado o no te pertenece' });
+  const { error, datos } = datosLugar(req.body);
+  if (error) return res.status(400).json({ error });
+
+  let foto = lugar.foto;
+  if (req.body?.imagen) {
+    foto = guardarFoto(req.body.imagen);
+    if (!foto) return res.status(400).json({ error: FOTO_INVALIDA });
+  } else if (req.body?.quitar_foto) {
+    foto = null;
+  }
+  db.prepare(`UPDATE lugares SET ${COLUMNAS_LUGAR.map((c) => `${c} = ?`).join(', ')}, foto = ? WHERE id = ?`)
+    .run(...COLUMNAS_LUGAR.map((c) => datos[c]), foto, lugar.id);
+  if (foto !== lugar.foto) borrarFoto(lugar.foto);
+  res.json(db.prepare(`${SELECT_LUGAR} WHERE l.id = ?`).get(req.usuario.id, lugar.id));
+});
+
 lugaresRouter.delete('/:id', (req, res) => {
-  const { changes } = db.prepare('DELETE FROM lugares WHERE id = ? AND creado_por = ?')
-    .run(Number(req.params.id), req.usuario.id);
-  if (!changes) return res.status(404).json({ error: 'Lugar no encontrado o no te pertenece' });
+  const lugar = db.prepare('SELECT id, foto FROM lugares WHERE id = ? AND creado_por = ?').get(Number(req.params.id), req.usuario.id);
+  if (!lugar) return res.status(404).json({ error: 'Lugar no encontrado o no te pertenece' });
+  db.prepare('DELETE FROM lugares WHERE id = ?').run(lugar.id);
+  borrarFoto(lugar.foto);
   res.status(204).end();
 });
 
@@ -87,7 +128,8 @@ lugaresRouter.get('/:id/resenas', (req, res) => {
 
 // Cada usuario tiene una reseña por lugar: si ya existe, se actualiza
 lugaresRouter.put('/:id/resenas', (req, res) => {
-  if (!lugarExiste(req, res)) return;
+  const lugar = lugarExiste(req, res);
+  if (!lugar) return;
   const estrellas = Number(req.body?.estrellas);
   if (!Number.isInteger(estrellas) || estrellas < 1 || estrellas > 5) {
     return res.status(400).json({ error: 'Elige de 1 a 5 estrellas' });
@@ -97,6 +139,9 @@ lugaresRouter.put('/:id/resenas', (req, res) => {
     ON CONFLICT (lugar_id, usuario_id) DO UPDATE SET
       estrellas = excluded.estrellas, comentario = excluded.comentario, creado_en = datetime('now')
   `).run(Number(req.params.id), req.usuario.id, estrellas, texto(req.body?.comentario, 1000));
+  if (lugar.creado_por && lugar.creado_por !== req.usuario.id) {
+    notificar([lugar.creado_por], `⭐ ${nombreCorto(req.usuario.nombre)} dejó una reseña de ${estrellas} ${estrellas === 1 ? 'estrella' : 'estrellas'} en “${lugar.nombre}”`, `mapa.html?lugar=${lugar.id}`);
+  }
   res.json(db.prepare(`${SELECT_LUGAR} WHERE l.id = ?`).get(req.usuario.id, Number(req.params.id)));
 });
 

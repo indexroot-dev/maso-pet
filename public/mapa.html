@@ -21,7 +21,14 @@
         <h1>Lugares pet-friendly</h1>
         <p class="sutil">Encuentra restaurantes, parques, hoteles y más donde tu mascota es bienvenida.</p>
 
-        <input id="buscar" type="search" placeholder="Buscar por nombre o dirección…" aria-label="Buscar lugares">
+        <form id="form-zona" class="buscar-zona" role="search">
+          <input id="zona" type="search" placeholder="📍 Ir a una comuna o dirección…" aria-label="Ir a una comuna o dirección" autocomplete="off">
+          <button class="btn sec chico" type="submit">Ir</button>
+        </form>
+        <ul id="resultados-zona" class="resultados-zona oculto"></ul>
+        <div id="zona-activa" class="zona-activa oculto"></div>
+
+        <input id="buscar" type="search" placeholder="🔎 Buscar lugares por nombre…" aria-label="Buscar lugares">
         <div class="chips" id="chips"></div>
         <div class="chips">
           <button type="button" class="chip" id="chip-favoritos" aria-pressed="false">❤️ Mis favoritos</button>
@@ -41,7 +48,7 @@
         </div>
 
         <form id="form-lugar" class="tarjeta oculto">
-          <h2>Nuevo lugar</h2>
+          <h2 id="titulo-form-lugar">Nuevo lugar</h2>
           <p class="sutil" id="ayuda-ubicacion">Haz clic en el mapa para marcar la ubicación.</p>
           <div id="aviso-lugar"></div>
           <div class="campos">
@@ -57,7 +64,14 @@
               </select>
             </label>
             <label class="ancho">Dirección<input name="direccion" maxlength="200"></label>
+            <label class="ancho">Horario<input name="horario" maxlength="200" placeholder="Ej: Lun a Vie 9:00–20:00, Sáb 10:00–14:00"></label>
             <label class="ancho">Descripción<textarea name="descripcion" maxlength="1000" placeholder="¿Qué ofrece para mascotas? ¿Tiene reglas?"></textarea></label>
+            <div class="ancho">
+              <label for="foto-lugar">Foto (opcional)</label>
+              <div id="vista-foto-lugar"></div>
+              <input type="file" id="foto-lugar" accept="image/*">
+              <label class="check oculto" id="quitar-foto-lugar"><input type="checkbox" name="quitar_foto"> Quitar la foto actual</label>
+            </div>
             <input type="hidden" name="lat">
             <input type="hidden" name="lng">
           </div>

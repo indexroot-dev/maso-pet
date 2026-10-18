@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { requiereLogin } from './auth.js';
+import { avisarPerdidaCerca } from '../notificaciones.js';
 
 const texto = (valor, max) => String(valor ?? '').trim().slice(0, max) || null;
 const DIAS_REENCUENTROS = 14;
@@ -21,7 +22,7 @@ perdidasRouter.get('/', (req, res) => {
 });
 
 perdidasRouter.post('/', (req, res) => {
-  const mascota = db.prepare('SELECT id FROM mascotas WHERE id = ? AND usuario_id = ?')
+  const mascota = db.prepare('SELECT id, nombre FROM mascotas WHERE id = ? AND usuario_id = ?')
     .get(Number(req.body?.mascota_id), req.usuario.id);
   if (!mascota) return res.status(400).json({ error: 'Elige una de tus mascotas' });
   if (db.prepare("SELECT 1 FROM perdidas WHERE mascota_id = ? AND estado = 'perdida'").get(mascota.id)) {
@@ -41,6 +42,7 @@ perdidasRouter.post('/', (req, res) => {
   const { lastInsertRowid } = db.prepare(`
     INSERT INTO perdidas (mascota_id, usuario_id, fecha, descripcion, contacto, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(mascota.id, req.usuario.id, fecha, texto(req.body?.descripcion, 1000), contacto, lat, lng);
+  avisarPerdidaCerca({ id: Number(lastInsertRowid), lat, lng, descripcion: texto(req.body?.descripcion, 1000) }, mascota, req.usuario.id);
   res.status(201).json({ id: Number(lastInsertRowid) });
 });
 

@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import { texto, coordenadasValidas, aproximar, elegidos, separar, nombreCorto, origenDe, distanciaKm, limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
 import { guardarFoto, borrarFoto } from '../fotos.js';
+import { notificar } from '../notificaciones.js';
 import { requiereLogin } from './auth.js';
 
 const SERVICIOS = ['paseo', 'cuidado', 'visita', 'guarderia'];
@@ -142,6 +143,7 @@ cuidadoresRouter.post('/:id/mensaje', limitador({ max: 15, minutos: 60 }), async
     console.error('No se pudo enviar el mensaje al cuidador:', err.message);
     return res.status(502).json({ error: 'No pudimos enviar el mensaje. Inténtalo más tarde.' });
   }
+  notificar([c.usuario_id], `✉️ ${nombreCorto(req.usuario.nombre)} te escribió por tu perfil de cuidador. Revisa tu correo para responder.`, `cuidador.html?id=${c.usuario_id}`);
   res.status(201).json({ mensaje: 'Mensaje enviado. Te responderá a tu correo.' });
 });
 
@@ -156,6 +158,7 @@ cuidadoresRouter.put('/:id/resenas', (req, res) => {
     INSERT INTO resenas_cuidador (cuidador_id, usuario_id, estrellas, comentario) VALUES (?, ?, ?, ?)
     ON CONFLICT (cuidador_id, usuario_id) DO UPDATE SET estrellas = excluded.estrellas, comentario = excluded.comentario, creado_en = datetime('now')
   `).run(c.usuario_id, req.usuario.id, estrellas, texto(req.body?.comentario, 1000));
+  notificar([c.usuario_id], `⭐ ${nombreCorto(req.usuario.nombre)} dejó una reseña de ${estrellas} ${estrellas === 1 ? 'estrella' : 'estrellas'} en tu perfil de cuidador`, `cuidador.html?id=${c.usuario_id}`);
   res.status(204).end();
 });
 

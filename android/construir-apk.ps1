@@ -34,16 +34,20 @@ function Ejecutar([string]$programa, [string[]]$argumentos) {
 }
 
 # Dirección del servidor
-if (-not $Url) {
-    $envArchivo = Join-Path $raiz '.env'
-    if (Test-Path $envArchivo) {
-        $linea = Get-Content $envArchivo | Where-Object { $_ -match '^\s*PUBLIC_URL\s*=' } | Select-Object -First 1
-        if ($linea) { $Url = ($linea -split '=', 2)[1].Trim().Trim('"') }
-    }
+$envArchivo = Join-Path $raiz '.env'
+function LeerEnv([string]$nombre) {
+    if (-not (Test-Path $envArchivo)) { return '' }
+    $linea = Get-Content $envArchivo | Where-Object { $_ -match "^\s*$nombre\s*=" } | Select-Object -First 1
+    if ($linea) { return ($linea -split '=', 2)[1].Trim().Trim('"') }
+    return ''
 }
+if (-not $Url) { $Url = LeerEnv 'PUBLIC_URL' }
 if (-not $Url) {
     $ip = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -like '192.168.*' -or $_.IPAddress -like '10.*' } | Select-Object -First 1 -ExpandProperty IPAddress
-    $Url = "http://${ip}:3000"
+    # Mismo puerto que usa el servidor (PORT del .env, o 3000 por defecto)
+    $puerto = LeerEnv 'PORT'
+    if (-not $puerto) { $puerto = '3000' }
+    $Url = "http://${ip}:${puerto}"
 }
 if (-not $Url.EndsWith('/')) { $Url = "$Url/" }
 Write-Host "Servidor de la app: $Url"

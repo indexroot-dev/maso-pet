@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Verifica tu correo — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <form id="form-verificar" class="tarjeta">
+      <h1>📧 Verifica tu correo</h1>
+      <p>Te enviamos un código de 6 números a <strong id="email-verificar">tu correo</strong>. Escríbelo aquí para activar tu cuenta.</p>
+      <p class="sutil">Si no lo ves, revisa la carpeta de spam o correo no deseado. El código vence en 15 minutos.</p>
+      <div id="aviso"></div>
+      <div class="campos">
+        <label class="ancho">Código
+          <input name="codigo" class="input-codigo" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" placeholder="000000" required>
+        </label>
+      </div>
+      <button class="btn bloque" type="submit">Verificar y entrar</button>
+      <p class="sutil">¿No te llegó? <button type="button" class="enlace-boton" id="btn-reenviar">Enviarme otro código</button></p>
+      <p class="sutil">¿Te equivocaste de correo? <a href="registro.html">Vuelve a registrarte</a></p>
+    </form>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

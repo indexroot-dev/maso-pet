@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Apoyar MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <section class="tarjeta apoyar">
+      <div class="apoyar-icono" aria-hidden="true">💚</div>
+      <h1>Apoya a MasoPet</h1>
+      <p>MasoPet es gratis y lo seguirá siendo. Si te ha servido para encontrar un lugar, cuidar la salud de tu mascota o ayudar a que una mascota perdida vuelva a casa, puedes aportar para que sigamos mejorándola.</p>
+      <p class="sutil">Tu aporte ayuda a pagar el servidor, el dominio y el envío de correos, y a seguir agregando funciones.</p>
+
+      <div id="formas-donar">
+        <a class="btn bloque oculto" id="btn-donar" target="_blank" rel="noopener">💚 Hacer un aporte</a>
+        <div class="transferencia oculto" id="caja-transferencia">
+          <h2>🏦 Transferencia <span id="banco-transferencia"></span></h2>
+          <dl class="datos-banco" id="datos-transferencia"></dl>
+          <button class="btn sec chico" type="button" id="btn-copiar">📋 Copiar todos los datos</button>
+        </div>
+        <p class="sutil oculto" id="sin-donaciones">Muy pronto podrás aportar desde aquí. ¡Gracias por tu interés!</p>
+      </div>
+    </section>
+
+    <section class="tarjeta siguenos oculto" id="siguenos">
+      <h2>📣 Síguenos</h2>
+      <p class="sutil">Consejos, mascotas en adopción, lugares nuevos y novedades de la app.</p>
+      <div class="redes" id="redes"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Otras formas de ayudar (también valen mucho)</h2>
+      <ul class="pasos">
+        <li>📍 Agrega al mapa los lugares pet-friendly que conozcas y deja reseñas.</li>
+        <li>📣 Comparte MasoPet con otras personas que tengan mascotas y síguenos en redes sociales.</li>
+        <li>🚩 Reporta la información falsa o desactualizada para mantener la app confiable.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/apoyar.js"></script>
+</body>
+</html>

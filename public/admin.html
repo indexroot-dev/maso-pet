@@ -24,6 +24,7 @@
         <button role="tab" data-pestana="reportes" aria-selected="false">🚩 Reportes <span class="contador oculto" id="contador-reportes"></span></button>
         <button role="tab" data-pestana="usuarios" aria-selected="false">👥 Usuarios</button>
         <button role="tab" data-pestana="contenido" aria-selected="false">🗂️ Contenido</button>
+        <button role="tab" data-pestana="ajustes" aria-selected="false">⚙️ Ajustes</button>
       </nav>
 
       <!-- Resumen -->
@@ -61,6 +62,64 @@
           <input type="search" id="buscar-contenido" placeholder="Buscar…" aria-label="Buscar contenido">
         </div>
         <div class="tabla-scroll tarjeta" style="margin-top: 1rem"><table id="tabla-contenido"></table></div>
+      </section>
+
+      <!-- Ajustes -->
+      <section id="pestana-ajustes" role="tabpanel" class="oculto">
+        <form class="tarjeta" id="form-ajustes">
+          <h2>💚 Donaciones</h2>
+          <p class="sutil">Lo que pongas aquí aparece en la página <a href="apoyar.html" target="_blank">Apoyar MasoPet</a>. Si dejas todo vacío, la página dice que muy pronto se podrá aportar.</p>
+          <div id="aviso-ajustes"></div>
+          <div class="campos">
+            <label class="ancho">Enlace para donar (Mercado Pago, PayPal, Ko-fi u otro)
+              <input name="donaciones_url" type="url" maxlength="300" placeholder="https://link.mercadopago.cl/masopet"></label>
+          </div>
+
+          <h3>🏦 Transferencia bancaria (opcional)</h3>
+          <p class="sutil">Estos datos se muestran públicamente para que puedan transferirte. Si dejas el número de cuenta vacío, no se muestra la transferencia. En una CuentaRUT de BancoEstado, el número de cuenta es tu RUT sin el dígito verificador.</p>
+          <div class="campos">
+            <label>Banco
+              <select name="transferencia_banco">
+                <option>BancoEstado</option>
+                <option>Banco de Chile</option>
+                <option>Santander</option>
+                <option>BCI</option>
+                <option>Scotiabank</option>
+                <option>Itaú</option>
+                <option>Banco Falabella</option>
+                <option>Banco Ripley</option>
+                <option>Banco Security</option>
+                <option>Banco BICE</option>
+                <option>Banco Consorcio</option>
+                <option>Banco Internacional</option>
+                <option>Mercado Pago</option>
+                <option>Tenpo</option>
+                <option>Coopeuch</option>
+              </select>
+            </label>
+            <label>Tipo de cuenta
+              <select name="transferencia_tipo">
+                <option>CuentaRUT</option>
+                <option>Cuenta Vista</option>
+                <option>Cuenta Corriente</option>
+                <option>Cuenta de Ahorro</option>
+                <option>Chequera Electrónica</option>
+              </select>
+            </label>
+            <label>Número de cuenta<input name="transferencia_numero" inputmode="numeric" maxlength="30" placeholder="12345678"></label>
+            <label>RUT del titular<input name="transferencia_rut" maxlength="12" placeholder="12.345.678-9"></label>
+            <label class="ancho">Nombre del titular<input name="transferencia_titular" maxlength="100" placeholder="Como aparece en el banco"></label>
+            <label class="ancho">Correo para el comprobante (opcional)<input name="transferencia_correo" type="email" maxlength="200" placeholder="m4sopets@gmail.com"></label>
+          </div>
+
+          <h2 style="margin-top: 1rem">📣 Redes sociales</h2>
+          <p class="sutil">Aparecen como botones “Síguenos” en la portada, en Apoyar MasoPet y en el menú Comunidad. Puedes pegar el enlace de tu perfil o solo tu usuario. Si lo dejas vacío, ese botón no aparece.</p>
+          <div class="campos">
+            <label class="ancho">🎵 TikTok<input name="tiktok_url" maxlength="200" placeholder="@masopet o https://www.tiktok.com/@masopet"></label>
+            <label class="ancho">📷 Instagram<input name="instagram_url" maxlength="200" placeholder="@masopet o https://www.instagram.com/masopet/"></label>
+          </div>
+          <button class="btn" type="submit">Guardar</button>
+        </form>
       </section>
     </div>
   </main>

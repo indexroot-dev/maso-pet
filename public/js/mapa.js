@@ -30,12 +30,18 @@ let ubicacion = null;
 let marcadorUbicacion = null;
 let marcadorNuevo = null;
 let lugarAbierto = null;
+let lugarEditando = null;
+let zonaBuscada = null;
+let marcadorZona = null;
 
 const icono = (contenido, extra = '') => L.divIcon({
   html: `<div class="marcador ${extra}">${contenido}</div>`,
   className: '', iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -18],
 });
-const distancia = (l) => (ubicacion ? distanciaKm(ubicacion, l) : null);
+// Las distancias se miden desde la comuna o dirección buscada o, si no hay, desde donde está la persona
+const origen = () => zonaBuscada || ubicacion;
+const distancia = (l) => (origen() ? distanciaKm(origen(), l) : null);
+const urlFoto = (foto) => `/fotos/${encodeURIComponent(foto)}`;
 const resumenEstrellas = (l) => (l.total_resenas
   ? `${estrellas(l.promedio)} <span class="sutil">${String(l.promedio).replace('.', ',')} (${l.total_resenas})</span>`
   : '<span class="sutil">Sin reseñas aún</span>');
@@ -53,7 +59,7 @@ async function cargarLugares() {
 function ordenados() {
   const orden = $('orden').value;
   const copia = [...lugares];
-  if (orden === 'distancia' && ubicacion) return copia.sort((a, b) => distancia(a) - distancia(b));
+  if (orden === 'distancia' && origen()) return copia.sort((a, b) => distancia(a) - distancia(b));
   if (orden === 'valoracion') return copia.sort((a, b) => (b.promedio || 0) - (a.promedio || 0) || b.total_resenas - a.total_resenas);
   return copia;
 }
@@ -65,6 +71,7 @@ function pintarLugares() {
     const cat = CATEGORIAS[lugar.categoria] || CATEGORIAS.otro;
     const m = L.marker([lugar.lat, lugar.lng], { icon: icono(cat.icono, lugar.es_favorito ? 'favorito' : '') })
       .bindPopup(`<div class="popup">
+        ${lugar.foto ? `<img class="popup-foto" src="${urlFoto(lugar.foto)}" alt="">` : ''}
         <h3>${cat.icono} ${esc(lugar.nombre)}</h3>
         <p>${resumenEstrellas(lugar)}</p>
         <button class="btn chico" data-detalle="${lugar.id}">Ver detalle y reseñas</button>
@@ -105,20 +112,22 @@ async function abrirDetalle(id) {
   const cat = CATEGORIAS[lugar.categoria] || CATEGORIAS.otro;
   const km = distancia(lugar);
   $('detalle').innerHTML = `
+    ${lugar.foto ? `<img class="foto-lugar" src="${urlFoto(lugar.foto)}" alt="Foto de ${esc(lugar.nombre)}">` : ''}
     <div class="detalle-cabecera">
       <span class="etiqueta">${cat.icono} ${cat.singular}</span>
       <h1>${esc(lugar.nombre)}</h1>
       <p>${resumenEstrellas(lugar)}</p>
     </div>
-    <p><span class="etiqueta">${esc(ADMITE[lugar.mascotas_admitidas])}</span>${km != null ? ` <span class="sutil">· a ${textoDistancia(km)} de ti</span>` : ''}</p>
+    <p><span class="etiqueta">${esc(ADMITE[lugar.mascotas_admitidas])}</span>${km != null ? ` <span class="sutil">· a ${textoDistancia(km)} de ${zonaBuscada ? esc(zonaBuscada.nombre) : 'ti'}</span>` : ''}</p>
     ${lugar.direccion ? `<p>📍 ${esc(lugar.direccion)}</p>` : ''}
+    ${lugar.horario ? `<p>🕒 ${esc(lugar.horario)}</p>` : ''}
     ${lugar.descripcion ? `<p class="sutil">${esc(lugar.descripcion)}</p>` : ''}
     <div class="acciones">
       <button class="btn ${lugar.es_favorito ? '' : 'sec'} chico" id="btn-favorito" aria-pressed="${Boolean(lugar.es_favorito)}">
         ${lugar.es_favorito ? '❤️ En favoritos' : '🤍 Guardar en favoritos'}</button>
       <a class="btn sec chico" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${lugar.lat},${lugar.lng}">🧭 Cómo llegar</a>
       ${usuario && lugar.creado_por === usuario.id
-        ? '<button class="btn peligro chico" id="btn-eliminar-lugar">Eliminar lugar</button>'
+        ? '<button class="btn sec chico" id="btn-editar-lugar">✏️ Editar</button> <button class="btn peligro chico" id="btn-eliminar-lugar">Eliminar lugar</button>'
         : '<button class="btn sec chico" id="btn-reportar-lugar">🚩 Reportar</button>'}
     </div>`;
 
@@ -195,6 +204,11 @@ async function cargarPerdidas() {
 function salirModoAgregar() {
   form.classList.add('oculto');
   form.reset();
+  lugarEditando = null;
+  $('vista-foto-lugar').innerHTML = '';
+  $('quitar-foto-lugar').classList.add('oculto');
+  $('titulo-form-lugar').textContent = 'Nuevo lugar';
+  $('ayuda-ubicacion').textContent = 'Haz clic en el mapa para marcar la ubicación.';
   document.body.classList.remove('modo-agregar');
   if (marcadorNuevo) mapa.removeLayer(marcadorNuevo);
   marcadorNuevo = null;
@@ -237,17 +251,89 @@ const abrirDesdeLista = (e) => {
 $('lista').addEventListener('click', abrirDesdeLista);
 $('lista').addEventListener('keydown', (e) => { if (e.key === 'Enter') abrirDesdeLista(e); });
 
-$('btn-cerca').addEventListener('click', () => {
-  if (!navigator.geolocation) return alert('Tu navegador no permite obtener la ubicación');
+// ---------- Ir a una comuna o dirección ----------
+// Usa el buscador gratuito de OpenStreetMap (Nominatim). Sus reglas piden no más de una búsqueda por segundo:
+// por eso solo se busca al apretar "Ir", no mientras se escribe.
+let resultadosZona = [];
+
+async function buscarZona(textoBuscado) {
+  const params = new URLSearchParams({ q: textoBuscado, format: 'jsonv2', countrycodes: 'cl', limit: '5', 'accept-language': 'es' });
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
+  if (!res.ok) throw new Error('El buscador de direcciones no respondió. Intenta de nuevo en unos segundos.');
+  return res.json();
+}
+
+function irAZona(r) {
+  const nombre = r.name || r.display_name.split(',')[0];
+  zonaBuscada = { lat: Number(r.lat), lng: Number(r.lon), nombre };
+  $('resultados-zona').classList.add('oculto');
+  $('zona').value = '';
+  if (marcadorZona) marcadorZona.remove();
+  marcadorZona = L.marker([zonaBuscada.lat, zonaBuscada.lng], { icon: icono('📌', 'zona') }).addTo(mapa).bindPopup(esc(r.display_name));
+  const [sur, norte, oeste, este] = (r.boundingbox || []).map(Number);
+  if (Number.isFinite(sur) && norte - sur > 0.005) mapa.fitBounds([[sur, oeste], [norte, este]], { maxZoom: 15 });
+  else mapa.setView([zonaBuscada.lat, zonaBuscada.lng], 15);
+  $('zona-activa').innerHTML = `Mostrando cerca de <strong>${esc(nombre)}</strong> <button type="button" class="enlace-reporte" id="btn-quitar-zona">✕ Quitar</button>`;
+  $('zona-activa').classList.remove('oculto');
+  $('orden').querySelector('[value="distancia"]').disabled = false;
+  $('orden').value = 'distancia';
+  pintarLugares();
+  if (lugarAbierto) abrirDetalle(lugarAbierto.id);
+}
+
+function quitarZona() {
+  zonaBuscada = null;
+  if (marcadorZona) marcadorZona.remove();
+  marcadorZona = null;
+  $('zona-activa').classList.add('oculto');
+  if (!ubicacion) {
+    $('orden').value = 'nombre';
+    $('orden').querySelector('[value="distancia"]').disabled = true;
+  }
+  pintarLugares();
+}
+
+$('form-zona').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const textoBuscado = $('zona').value.trim();
+  if (textoBuscado.length < 3) return;
+  const lista = $('resultados-zona');
+  lista.classList.remove('oculto');
+  lista.innerHTML = '<li class="vacio">Buscando…</li>';
+  try {
+    resultadosZona = await buscarZona(textoBuscado);
+    if (resultadosZona.length === 1) return irAZona(resultadosZona[0]);
+    lista.innerHTML = resultadosZona.map((r, i) => `<li><button type="button" data-zona="${i}">${esc(r.display_name)}</button></li>`).join('')
+      || '<li class="vacio">No encontramos ese lugar. Prueba con otra forma de escribirlo (ej: "Ñuñoa" o "Av. Grecia 1200, Ñuñoa").</li>';
+  } catch (err) {
+    lista.innerHTML = `<li class="vacio">${esc(err.message === 'Failed to fetch' ? 'No hay conexión con el buscador de direcciones.' : err.message)}</li>`;
+  }
+});
+
+$('resultados-zona').addEventListener('click', (e) => {
+  const boton = e.target.closest('[data-zona]');
+  if (boton) irAZona(resultadosZona[Number(boton.dataset.zona)]);
+});
+
+$('zona-activa').addEventListener('click', (e) => {
+  if (e.target.closest('#btn-quitar-zona')) quitarZona();
+});
+
+// ---------- Mi ubicación ----------
+// automatico: al abrir el mapa. Si falla no muestra alertas, y no mueve el mapa si la persona ya está haciendo algo.
+function ubicarme(automatico = false) {
+  if (!navigator.geolocation) return automatico || alert('Tu navegador no permite obtener la ubicación');
   $('btn-cerca').textContent = '📍 Buscando…';
   navigator.geolocation.getCurrentPosition(
     ({ coords }) => {
       ubicacion = { lat: coords.latitude, lng: coords.longitude };
       $('btn-cerca').textContent = '📍 Cerca de mí';
+      if (!automatico && zonaBuscada) quitarZona();
       if (marcadorUbicacion) marcadorUbicacion.remove();
       marcadorUbicacion = L.circleMarker([ubicacion.lat, ubicacion.lng], { radius: 8, color: '#fff', weight: 2, fillColor: '#2b6cb0', fillOpacity: 1 })
         .addTo(mapa).bindPopup('Estás aquí');
-      mapa.setView([ubicacion.lat, ubicacion.lng], 14);
+      const ocupado = automatico && (lugarAbierto || document.body.classList.contains('modo-agregar'));
+      if (!ocupado) mapa.setView([ubicacion.lat, ubicacion.lng], 14);
       $('orden').querySelector('[value="distancia"]').disabled = false;
       $('orden').value = 'distancia';
       pintarLugares();
@@ -255,13 +341,15 @@ $('btn-cerca').addEventListener('click', () => {
     },
     () => {
       $('btn-cerca').textContent = '📍 Cerca de mí';
-      alert('No pudimos obtener tu ubicación. Revisa que el navegador tenga permiso.');
+      if (!automatico) alert('No pudimos obtener tu ubicación. Revisa que el navegador tenga permiso.');
     },
     { enableHighAccuracy: true, timeout: 10000 },
   );
-});
+}
+$('btn-cerca').addEventListener('click', () => ubicarme());
 
 $('btn-agregar').addEventListener('click', () => {
+  salirModoAgregar();
   form.classList.remove('oculto');
   document.body.classList.add('modo-agregar');
   $('aviso-lugar').className = '';
@@ -280,16 +368,44 @@ mapa.on('click', (e) => {
   $('ayuda-ubicacion').textContent = '✅ Ubicación marcada (puedes hacer clic de nuevo para moverla).';
 });
 
+function editarLugar(lugar) {
+  salirModoAgregar();
+  lugarEditando = lugar;
+  for (const campo of ['nombre', 'categoria', 'mascotas_admitidas', 'direccion', 'descripcion', 'horario', 'lat', 'lng']) {
+    form[campo].value = lugar[campo] ?? '';
+  }
+  $('titulo-form-lugar').textContent = 'Editar lugar';
+  $('ayuda-ubicacion').textContent = 'Si quieres mover el lugar, haz clic en el mapa en la nueva ubicación.';
+  if (lugar.foto) {
+    $('vista-foto-lugar').innerHTML = `<img class="foto-lugar chica" src="${urlFoto(lugar.foto)}" alt="Foto actual">`;
+    $('quitar-foto-lugar').classList.remove('oculto');
+  }
+  marcadorNuevo = L.marker([lugar.lat, lugar.lng], { icon: icono('✏️', 'nuevo') }).addTo(mapa);
+  cerrarDetalle();
+  form.classList.remove('oculto');
+  document.body.classList.add('modo-agregar');
+  form.nombre.focus();
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!form.lat.value) return mostrarAviso($('aviso-lugar'), 'Haz clic en el mapa para marcar la ubicación');
+  const boton = form.querySelector('[type="submit"]');
+  boton.disabled = true;
   try {
-    const lugar = await api('/api/lugares', { method: 'POST', body: datosFormulario(form) });
+    const datos = datosFormulario(form);
+    const archivo = $('foto-lugar').files[0];
+    if (archivo) datos.imagen = await redimensionarImagen(archivo);
+    const lugar = lugarEditando
+      ? await api(`/api/lugares/${lugarEditando.id}`, { method: 'PUT', body: datos })
+      : await api('/api/lugares', { method: 'POST', body: datos });
     salirModoAgregar();
     await cargarLugares();
     abrirDetalle(lugar.id);
   } catch (err) {
     mostrarAviso($('aviso-lugar'), err.message);
+  } finally {
+    boton.disabled = false;
   }
 });
 
@@ -305,6 +421,7 @@ $('detalle').addEventListener('click', async (e) => {
     await api(`/api/lugares/${lugarAbierto.id}/favorito`, { method: lugarAbierto.es_favorito ? 'DELETE' : 'PUT' });
     refrescarDetalle();
   }
+  if (e.target.closest('#btn-editar-lugar')) editarLugar(lugarAbierto);
   if (e.target.closest('#btn-reportar-lugar')) abrirReporte('lugar', lugarAbierto.id, lugarAbierto.nombre);
   if (e.target.closest('#btn-eliminar-lugar') && confirm('¿Eliminar este lugar del mapa?')) {
     try {
@@ -347,6 +464,8 @@ pintarChips();
 requerirSesion().then((u) => {
   usuario = u;
   if (!u) return;
-  cargarLugares();
+  const lugarPedido = Number(new URLSearchParams(location.search).get('lugar'));
+  cargarLugares().then(() => { if (lugarPedido) abrirDetalle(lugarPedido); });
   cargarPerdidas();
+  if (!lugarPedido) ubicarme(true);
 });

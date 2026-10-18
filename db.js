@@ -339,6 +339,43 @@ db.exec(`
 agregarColumna('mascotas', 'tamano', 'TEXT');
 agregarColumna('mascotas', 'caracter', 'TEXT');
 
+// Foto y horario de los lugares del mapa
+agregarColumna('lugares', 'foto', 'TEXT');
+agregarColumna('lugares', 'horario', 'TEXT');
+
+// Zona del usuario (aproximada, ~1 km) para avisarle de mascotas perdidas cerca
+agregarColumna('usuarios', 'zona_lat', 'REAL');
+agregarColumna('usuarios', 'zona_lng', 'REAL');
+agregarColumna('usuarios', 'avisos_cerca', 'INTEGER NOT NULL DEFAULT 1');
+
+// Verificación del correo con un código al crear la cuenta.
+// DEFAULT 1: las cuentas que ya existían quedan verificadas; las nuevas se crean con 0.
+agregarColumna('usuarios', 'verificado', 'INTEGER NOT NULL DEFAULT 1');
+db.exec(`
+  CREATE TABLE IF NOT EXISTS verificaciones (
+    usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+    codigo_hash TEXT NOT NULL,
+    expira INTEGER NOT NULL,
+    intentos INTEGER NOT NULL DEFAULT 0
+  );
+`);
+
+// Ajustes generales que el administrador cambia desde el panel (ej: enlace de donaciones)
+db.exec('CREATE TABLE IF NOT EXISTS ajustes (clave TEXT PRIMARY KEY, valor TEXT)');
+
+// Notificaciones dentro de la app (la campanita del menú)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS notificaciones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    texto TEXT NOT NULL,
+    enlace TEXT,
+    leida INTEGER NOT NULL DEFAULT 0,
+    creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS notificaciones_usuario ON notificaciones (usuario_id, leida);
+`);
+
 // Lugares de ejemplo (ficticios) para que el mapa no parta vacío
 const { total } = db.prepare('SELECT COUNT(*) AS total FROM lugares').get();
 if (total === 0) {

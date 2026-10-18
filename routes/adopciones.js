@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import { texto, coordenadasValidas, aproximar, nombreCorto, origenDe, distanciaKm, limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
 import { guardarFoto, copiarFoto, borrarFoto } from '../fotos.js';
+import { notificar } from '../notificaciones.js';
 import { requiereLogin } from './auth.js';
 
 const ESPECIES = ['perro', 'gato', 'ave', 'conejo', 'roedor', 'reptil', 'otro'];
@@ -208,6 +209,7 @@ adopcionesRouter.post('/:id/solicitudes', limitador({ max: 15, minutos: 60 }), a
     .run(a.id, req.usuario.id, mensaje, telefono);
   if (!changes) return res.status(409).json({ error: 'Ya enviaste tu interés por esta mascota' });
 
+  notificar([a.usuario_id], `🏠 ${nombreCorto(req.usuario.nombre)} quiere adoptar a ${a.nombre}`, `adopcion.html?id=${a.id}`);
   const duenio = db.prepare('SELECT email FROM usuarios WHERE id = ?').get(a.usuario_id);
   enviarCorreo({
     para: duenio.email,

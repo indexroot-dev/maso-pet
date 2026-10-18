@@ -8,6 +8,7 @@
   <link rel="icon" href="icons/icono-192.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <title>Mi cuenta — MasoPet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -15,12 +16,15 @@
 
   <main class="contenedor angosto">
     <h1>Mi cuenta</h1>
-    <section class="tarjeta">
-      <div class="sutil">Nombre</div>
-      <p id="nombre" style="margin-top: 0">—</p>
+    <form class="tarjeta" id="form-nombre">
+      <div id="aviso-nombre"></div>
+      <div class="campos">
+        <label class="ancho">Nombre<input name="nombre" required maxlength="100" autocomplete="name"></label>
+      </div>
       <div class="sutil">Correo</div>
-      <p id="email" style="margin: 0">—</p>
-    </section>
+      <p id="email" style="margin-top: 0">—</p>
+      <button class="btn" type="submit">Guardar nombre</button>
+    </form>
 
     <section class="tarjeta">
       <h2>✉️ Recordatorios por correo</h2>
@@ -28,6 +32,18 @@
       <div id="aviso-recordatorios"></div>
       <label class="check interruptor"><input type="checkbox" id="chk-recordatorios"> Recibir recordatorios</label>
       <button class="btn sec chico" id="btn-prueba" type="button" style="margin-top: .75rem">Enviarme un correo de prueba</button>
+    </section>
+
+    <section class="tarjeta">
+      <h2>📍 Mi zona</h2>
+      <p class="sutil">Si se pierde una mascota a menos de <span id="radio-km">5</span> km de tu zona, te avisamos en la campanita 🔔 y por correo. Toca el mapa cerca de donde vives. Guardamos solo una zona aproximada (unos 1 km), nunca tu dirección.</p>
+      <div id="aviso-zona"></div>
+      <div id="mapa-zona" class="mapa-chico"></div>
+      <div class="acciones" style="margin-top: .5rem">
+        <button class="btn sec chico" type="button" id="btn-zona-ubicacion">📍 Usar mi ubicación</button>
+        <button class="btn sec chico oculto" type="button" id="btn-zona-quitar">Quitar mi zona</button>
+      </div>
+      <label class="check interruptor" style="margin-top: .75rem"><input type="checkbox" id="chk-avisos-cerca"> Avisarme de mascotas perdidas cerca</label>
     </section>
 
     <form class="tarjeta" id="form-password">
@@ -40,8 +56,25 @@
       </div>
       <button class="btn" type="submit">Cambiar contraseña</button>
     </form>
+
+    <section class="tarjeta">
+      <h2>📦 Descargar mis datos</h2>
+      <p class="sutil">Descarga en un archivo todo lo que tienes en MasoPet: tu cuenta, tus mascotas con sus fichas clínicas y libro de control, y todo lo que has publicado. Para la ficha de una mascota en PDF, ábrela y usa “Imprimir o guardar PDF”.</p>
+      <a class="btn sec" href="/api/cuenta/mis-datos" download>⬇️ Descargar mis datos</a>
+    </section>
+
+    <form class="tarjeta" id="form-eliminar">
+      <h2>🗑️ Eliminar mi cuenta</h2>
+      <p class="sutil">Se borrarán para siempre tu cuenta, tus mascotas con sus fichas clínicas, y todo lo que hayas publicado (avisos, adopciones, paseos, eventos, reseñas y tu perfil de cuidador). Los lugares que agregaste al mapa se mantienen, pero sin tu nombre. Esto no se puede deshacer.</p>
+      <div id="aviso-eliminar"></div>
+      <div class="campos">
+        <label class="ancho">Escribe tu contraseña para confirmar<input name="password" type="password" autocomplete="current-password" required></label>
+      </div>
+      <button class="btn peligro" type="submit">Eliminar mi cuenta</button>
+    </form>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/comun.js"></script>
   <script src="js/cuenta.js"></script>
 </body>

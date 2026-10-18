@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icono-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <title>Notificaciones — MasoPet</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="nav" id="nav"></header>
+
+  <main class="contenedor angosto">
+    <div class="encabezado">
+      <h1>🔔 Notificaciones</h1>
+      <button class="btn sec chico oculto" id="btn-borrar" type="button">Borrar todas</button>
+    </div>
+    <p class="sutil">Aquí te avisamos cuando alguien se une a tu paseo, quiere adoptar, te deja una reseña, se pierde una mascota cerca de tu zona o se acerca una vacuna.</p>
+    <ul class="lista-notificaciones" id="lista"><li class="vacio">Cargando…</li></ul>
+  </main>
+
+  <script src="js/comun.js"></script>
+  <script src="js/notificaciones.js"></script>
+</body>
+</html>

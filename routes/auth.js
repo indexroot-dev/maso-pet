@@ -4,6 +4,7 @@ import { db } from '../db.js';
 import { limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
 import { enviarRecordatorio, proximasDosis } from '../recordatorios.js';
+import { borrarFoto } from '../fotos.js';
 
 const DIAS_SESION = 7;
 const MS_SESION = DIAS_SESION * 24 * 60 * 60 * 1000;
@@ -53,7 +54,7 @@ export function cargarUsuario(req, res, next) {
     const usuario = db.prepare(`
       SELECT u.id, u.nombre, u.email, u.recordatorios, u.rol FROM sesiones s
       JOIN usuarios u ON u.id = s.usuario_id
-      WHERE s.token_hash = ? AND s.expira > ? AND u.bloqueado = 0
+      WHERE s.token_hash = ? AND s.expira > ? AND u.bloqueado = 0 AND u.verificado = 1
     `).get(hashToken(token), Date.now());
     if (usuario) req.usuario = usuario;
   }
@@ -75,7 +76,33 @@ const CUENTA_SUSPENDIDA = 'Tu cuenta está suspendida. Si crees que es un error,
 
 export const authRouter = Router();
 
-authRouter.post('/registro', limitador({ max: 10, minutos: 60 }), (req, res) => {
+// ---------- Verificar el correo con un código ----------
+const MINUTOS_CODIGO = 15;
+const MAX_INTENTOS_CODIGO = 5;
+const NO_SE_ENVIO_CODIGO = 'No pudimos enviarte el código. Inténtalo de nuevo en unos minutos.';
+
+// Crea un código nuevo de 6 números (anula el anterior) y lo envía por correo
+async function enviarCodigo(usuario) {
+  const codigo = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+  db.prepare(`
+    INSERT INTO verificaciones (usuario_id, codigo_hash, expira, intentos) VALUES (?, ?, ?, 0)
+    ON CONFLICT (usuario_id) DO UPDATE SET codigo_hash = excluded.codigo_hash, expira = excluded.expira, intentos = 0
+  `).run(usuario.id, hashToken(codigo), Date.now() + MINUTOS_CODIGO * 6e4);
+  await enviarCorreo({
+    para: usuario.email,
+    asunto: `🐾 Tu código de MasoPet: ${codigo}`,
+    html: plantilla('Verifica tu correo', `
+      <p>Hola ${escHtml(usuario.nombre)}, este es tu código para activar tu cuenta de MasoPet:</p>
+      <p style="font-size:32px;font-weight:800;letter-spacing:8px;margin:20px 0;color:#0f766e">${codigo}</p>
+      <p style="color:#64748b;font-size:13px">Vence en ${MINUTOS_CODIGO} minutos. Si no creaste una cuenta, ignora este correo.</p>`),
+    texto: `Tu código de MasoPet es ${codigo} (vence en ${MINUTOS_CODIGO} minutos).`,
+  });
+}
+
+const pedirVerificacion = (res, email, status = 201) =>
+  res.status(status).json({ verificar: true, email, error: status === 403 ? 'Primero verifica tu correo: te enviamos un código.' : undefined });
+
+authRouter.post('/registro', limitador({ max: 10, minutos: 60 }), async (req, res) => {
   const nombre = String(req.body?.nombre || '').trim();
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
@@ -85,17 +112,68 @@ authRouter.post('/registro', limitador({ max: 10, minutos: 60 }), (req, res) => 
   const errorPassword = validarPassword(password);
   if (errorPassword) return res.status(400).json({ error: errorPassword });
 
-  if (db.prepare('SELECT 1 FROM usuarios WHERE email = ?').get(email)) {
-    return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
+  // Si la cuenta existe pero nunca se verificó, nadie ha probado ser dueño de ese correo:
+  // se actualizan los datos y se envía un código nuevo
+  const existente = db.prepare('SELECT id, verificado FROM usuarios WHERE email = ?').get(email);
+  if (existente?.verificado) return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
+  let id = existente?.id;
+  if (id) {
+    db.prepare('UPDATE usuarios SET nombre = ?, password_hash = ? WHERE id = ?').run(nombre, hashPassword(password), id);
+  } else {
+    id = Number(db.prepare('INSERT INTO usuarios (nombre, email, password_hash, verificado) VALUES (?, ?, ?, 0)')
+      .run(nombre, email, hashPassword(password)).lastInsertRowid);
   }
 
-  const { lastInsertRowid } = db.prepare('INSERT INTO usuarios (nombre, email, password_hash) VALUES (?, ?, ?)')
-    .run(nombre, email, hashPassword(password));
-  crearSesion(res, lastInsertRowid);
-  res.status(201).json({ id: Number(lastInsertRowid), nombre, email });
+  try {
+    await enviarCodigo({ id, nombre, email });
+  } catch (err) {
+    console.error('No se pudo enviar el código de verificación:', err.message);
+    return res.status(502).json({ error: NO_SE_ENVIO_CODIGO });
+  }
+  pedirVerificacion(res, email);
 });
 
-authRouter.post('/login', limitador({ max: 10, minutos: 15 }), (req, res) => {
+authRouter.post('/verificar', limitador({ max: 20, minutos: 15 }), (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const codigo = String(req.body?.codigo || '').replace(/\D/g, '');
+  const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+  if (!usuario) return res.status(400).json({ error: 'El código no es correcto' });
+  if (usuario.verificado) return res.status(400).json({ error: 'Esta cuenta ya está verificada. Inicia sesión.' });
+  if (usuario.bloqueado) return res.status(403).json({ error: CUENTA_SUSPENDIDA });
+
+  const fila = db.prepare('SELECT * FROM verificaciones WHERE usuario_id = ?').get(usuario.id);
+  if (!fila || fila.expira <= Date.now()) return res.status(400).json({ error: 'El código venció. Pide uno nuevo.' });
+  if (fila.intentos >= MAX_INTENTOS_CODIGO) return res.status(400).json({ error: 'Demasiados intentos. Pide un código nuevo.' });
+
+  const correcto = codigo.length === 6 && crypto.timingSafeEqual(Buffer.from(hashToken(codigo)), Buffer.from(fila.codigo_hash));
+  if (!correcto) {
+    db.prepare('UPDATE verificaciones SET intentos = intentos + 1 WHERE usuario_id = ?').run(usuario.id);
+    const quedan = MAX_INTENTOS_CODIGO - fila.intentos - 1;
+    return res.status(400).json({ error: quedan ? `El código no es correcto. Te quedan ${quedan} ${quedan === 1 ? 'intento' : 'intentos'}.` : 'Demasiados intentos. Pide un código nuevo.' });
+  }
+
+  db.prepare('UPDATE usuarios SET verificado = 1 WHERE id = ?').run(usuario.id);
+  db.prepare('DELETE FROM verificaciones WHERE usuario_id = ?').run(usuario.id);
+  crearSesion(res, usuario.id);
+  res.json({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
+});
+
+// Siempre responde lo mismo, para no revelar qué correos están registrados
+authRouter.post('/reenviar-codigo', limitador({ max: 5, minutos: 60, mensaje: 'Ya pediste varios códigos. Espera un rato e inténtalo de nuevo.' }), async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const usuario = db.prepare('SELECT id, nombre, email FROM usuarios WHERE email = ? AND verificado = 0 AND bloqueado = 0').get(email);
+  if (usuario) {
+    try {
+      await enviarCodigo(usuario);
+    } catch (err) {
+      console.error('No se pudo reenviar el código de verificación:', err.message);
+      return res.status(502).json({ error: NO_SE_ENVIO_CODIGO });
+    }
+  }
+  res.json({ mensaje: 'Te enviamos un código nuevo. Revisa tu correo (también la carpeta de spam).' });
+});
+
+authRouter.post('/login', limitador({ max: 10, minutos: 15 }), async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
@@ -104,6 +182,16 @@ authRouter.post('/login', limitador({ max: 10, minutos: 15 }), (req, res) => {
     return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
   }
   if (usuario.bloqueado) return res.status(403).json({ error: CUENTA_SUSPENDIDA });
+  // Contraseña correcta pero correo sin verificar: se envía un código nuevo
+  if (!usuario.verificado) {
+    try {
+      await enviarCodigo(usuario);
+    } catch (err) {
+      console.error('No se pudo enviar el código de verificación:', err.message);
+      return res.status(502).json({ error: NO_SE_ENVIO_CODIGO });
+    }
+    return pedirVerificacion(res, usuario.email, 403);
+  }
   db.prepare('DELETE FROM sesiones WHERE expira <= ?').run(Date.now());
   crearSesion(res, usuario.id);
   res.json({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
@@ -117,7 +205,9 @@ authRouter.post('/logout', (req, res) => {
 });
 
 authRouter.get('/me', (req, res) => {
-  res.json(req.usuario || null);
+  if (!req.usuario) return res.json(null);
+  const { n } = db.prepare('SELECT COUNT(*) AS n FROM notificaciones WHERE usuario_id = ? AND leida = 0').get(req.usuario.id);
+  res.json({ ...req.usuario, no_leidas: n });
 });
 
 // ---------- Recuperar contraseña ----------
@@ -159,7 +249,9 @@ authRouter.post('/restablecer', limitador({ max: 10, minutos: 60 }), (req, res) 
   if (!fila) return res.status(400).json({ error: 'El enlace no es válido o ya venció. Solicita uno nuevo.' });
   if (fila.bloqueado) return res.status(403).json({ error: CUENTA_SUSPENDIDA });
 
-  db.prepare('UPDATE usuarios SET password_hash = ? WHERE id = ?').run(hashPassword(req.body.password), fila.usuario_id);
+  // Abrir el enlace del correo también demuestra que el correo es suyo
+  db.prepare('UPDATE usuarios SET password_hash = ?, verificado = 1 WHERE id = ?').run(hashPassword(req.body.password), fila.usuario_id);
+  db.prepare('DELETE FROM verificaciones WHERE usuario_id = ?').run(fila.usuario_id);
   db.prepare('DELETE FROM restablecimientos WHERE usuario_id = ?').run(fila.usuario_id);
   db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').run(fila.usuario_id);
   crearSesion(res, fila.usuario_id);
@@ -184,6 +276,29 @@ authRouter.put('/password', requiereLogin, limitador({ max: 10, minutos: 15 }), 
 authRouter.put('/preferencias', requiereLogin, (req, res) => {
   db.prepare('UPDATE usuarios SET recordatorios = ? WHERE id = ?').run(req.body?.recordatorios ? 1 : 0, req.usuario.id);
   res.json({ recordatorios: req.body?.recordatorios ? 1 : 0 });
+});
+
+// Borra la cuenta y todo lo suyo (mascotas, fichas, publicaciones, reseñas…) gracias a ON DELETE CASCADE.
+// Los lugares que agregó al mapa se mantienen, pero sin autor.
+authRouter.delete('/cuenta', requiereLogin, limitador({ max: 10, minutos: 15 }), (req, res) => {
+  const usuario = db.prepare('SELECT password_hash, rol FROM usuarios WHERE id = ?').get(req.usuario.id);
+  if (!verificarPassword(String(req.body?.password || ''), usuario.password_hash)) {
+    return res.status(400).json({ error: 'La contraseña no es correcta' });
+  }
+  if (usuario.rol === 'admin') {
+    const { otros } = db.prepare("SELECT COUNT(*) AS otros FROM usuarios WHERE rol = 'admin' AND bloqueado = 0 AND id != ?").get(req.usuario.id);
+    if (!otros) return res.status(400).json({ error: 'Eres el único administrador. Nombra a otro administrador antes de eliminar tu cuenta.' });
+  }
+
+  const fotos = db.prepare(`
+    SELECT foto FROM mascotas WHERE usuario_id = ?1
+    UNION SELECT foto FROM adopciones WHERE usuario_id = ?1
+    UNION SELECT foto FROM perfiles_cuidador WHERE usuario_id = ?1
+  `).all(req.usuario.id);
+  db.prepare('DELETE FROM usuarios WHERE id = ?').run(req.usuario.id);
+  for (const { foto } of fotos) borrarFoto(foto);
+  res.clearCookie('sid');
+  res.status(204).end();
 });
 
 authRouter.post('/recordatorio-prueba', requiereLogin, limitador({ max: 3, minutos: 60 }), async (req, res) => {

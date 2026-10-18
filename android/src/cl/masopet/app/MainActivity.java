@@ -2,12 +2,18 @@ package cl.masopet.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.print.PrintAttributes;
+import android.print.PrintManager;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.URLUtil;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -16,6 +22,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 /**
  * App de Android de MasoPet: muestra la aplicación web en pantalla completa.
@@ -94,6 +101,18 @@ public class MainActivity extends Activity {
             }
         });
 
+        // "Imprimir ficha": abre el diálogo de Android, que permite guardar como PDF
+        web.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void imprimir(String titulo) {
+                runOnUiThread(() -> ((PrintManager) getSystemService(PRINT_SERVICE))
+                    .print(titulo, web.createPrintDocumentAdapter(titulo), new PrintAttributes.Builder().build()));
+            }
+        }, "MasoPetAndroid");
+
+        // Descargas (ej: "Descargar mis datos"): van a la carpeta Descargas, con la sesión del usuario
+        web.setDownloadListener((url, agente, disposicion, tipo, largo) -> descargar(url, agente, disposicion, tipo));
+
         if (estadoGuardado != null) web.restoreState(estadoGuardado);
         else web.loadUrl(URL_APP);
     }
@@ -104,6 +123,28 @@ public class MainActivity extends Activity {
         return ("http".equals(esquema) || "https".equals(esquema))
             && app.getHost() != null && app.getHost().equalsIgnoreCase(destino.getHost())
             && app.getPort() == destino.getPort();
+    }
+
+    private void descargar(String url, String agente, String disposicion, String tipo) {
+        try {
+            String nombre = URLUtil.guessFileName(url, disposicion, tipo);
+            DownloadManager.Request pedido = new DownloadManager.Request(Uri.parse(url))
+                .addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                .addRequestHeader("User-Agent", agente)
+                .setMimeType(tipo)
+                .setTitle(nombre)
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            try {
+                pedido.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, nombre);
+            } catch (Exception sinPermiso) {
+                // Android 9 o anterior sin permiso de almacenamiento: queda en la carpeta de la app
+                pedido.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, nombre);
+            }
+            ((DownloadManager) getSystemService(DOWNLOAD_SERVICE)).enqueue(pedido);
+            Toast.makeText(this, "Descargando " + nombre + "…", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "No se pudo descargar el archivo", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void abrirFuera(Uri destino) {

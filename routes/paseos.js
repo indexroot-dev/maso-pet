@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import { fechaLocal, distanciaKm, limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
 import { requiereLogin } from './auth.js';
+import { notificar as notificarEnApp } from '../notificaciones.js';
 
 const HORARIOS = ['manana', 'tarde', 'noche'];
 const RADIOS = [1, 3, 5, 10, 20];
@@ -29,7 +30,10 @@ function mascotasDePaseo(usuarioId) {
   `).all(usuarioId);
 }
 
+// Aviso en la campanita y por correo. enlace es relativo, ej: "paseo.html?id=3"
 async function notificar(usuarioIds, asunto, titulo, cuerpo, enlace, textoBoton) {
+  notificarEnApp(usuarioIds, asunto, enlace);
+  enlace = `${urlPublica()}/${enlace}`;
   const usuarios = db.prepare(`SELECT nombre, email FROM usuarios WHERE bloqueado = 0 AND id IN (${usuarioIds.map(() => '?').join(',') || 'NULL'})`).all(...usuarioIds);
   for (const u of usuarios) {
     enviarCorreo({
@@ -189,7 +193,7 @@ paseosRouter.post('/', limitador({ max: 10, minutos: 60, mensaje: 'Has creado mu
   if (invitados.length) {
     notificar(invitados, `🦮 ${nombreCorto(req.usuario.nombre)} te invita a pasear`, 'Te invitaron a un paseo',
       `<p><strong>${escHtml(nombreCorto(req.usuario.nombre))}</strong> te invita a <strong>${escHtml(titulo)}</strong>: ${escHtml(fechaBonita(fecha, hora))} en ${escHtml(punto)}.</p>`,
-      `${urlPublica()}/paseo.html?id=${id}`, 'Ver invitación');
+      `paseo.html?id=${id}`, 'Ver invitación');
   }
   res.status(201).json({ id, invitados: invitados.length });
 });
@@ -232,7 +236,7 @@ paseosRouter.post('/:id/unirme', (req, res) => {
   `).run(paseo.id, req.usuario.id);
   notificar([paseo.organizador_id], `🐾 ${nombreCorto(req.usuario.nombre)} se unió a tu paseo`, 'Alguien se unió a tu paseo',
     `<p><strong>${escHtml(nombreCorto(req.usuario.nombre))}</strong> irá a <strong>${escHtml(paseo.titulo)}</strong> (${escHtml(fechaBonita(paseo.fecha, paseo.hora))}).</p>`,
-    `${urlPublica()}/paseo.html?id=${paseo.id}`, 'Ver paseo');
+    `paseo.html?id=${paseo.id}`, 'Ver paseo');
   res.status(204).end();
 });
 
@@ -257,7 +261,7 @@ paseosRouter.post('/:id/invitar', (req, res) => {
   if (changes) {
     notificar([invitado], `🦮 ${nombreCorto(req.usuario.nombre)} te invita a pasear`, 'Te invitaron a un paseo',
       `<p><strong>${escHtml(nombreCorto(req.usuario.nombre))}</strong> te invita a <strong>${escHtml(paseo.titulo)}</strong>: ${escHtml(fechaBonita(paseo.fecha, paseo.hora))} en ${escHtml(paseo.punto)}.</p>`,
-      `${urlPublica()}/paseo.html?id=${paseo.id}`, 'Ver invitación');
+      `paseo.html?id=${paseo.id}`, 'Ver invitación');
   }
   res.status(204).end();
 });
@@ -272,7 +276,7 @@ paseosRouter.delete('/:id', (req, res) => {
   if (avisar.length) {
     notificar(avisar, `❌ Se canceló el paseo “${paseo.titulo}”`, 'Paseo cancelado',
       `<p>El paseo <strong>${escHtml(paseo.titulo)}</strong> del ${escHtml(fechaBonita(paseo.fecha, paseo.hora))} fue cancelado por quien lo organizaba.</p>`,
-      `${urlPublica()}/paseos.html`, 'Buscar otros paseos');
+      `paseos.html`, 'Buscar otros paseos');
   }
   res.status(204).end();
 });
@@ -284,6 +288,10 @@ paseosRouter.post('/:id/comentarios', limitador({ max: 40, minutos: 60 }), (req,
   const comentario = texto(req.body?.texto, 1000);
   if (!comentario) return res.status(400).json({ error: 'Escribe un mensaje' });
   db.prepare('INSERT INTO paseo_comentarios (paseo_id, usuario_id, texto) VALUES (?, ?, ?)').run(paseo.id, req.usuario.id, comentario);
+  // Solo en la campanita (no por correo) a quienes van al paseo
+  const avisar = db.prepare("SELECT usuario_id FROM paseo_participantes WHERE paseo_id = ? AND estado = 'va' AND usuario_id != ?")
+    .all(paseo.id, req.usuario.id).map((p) => p.usuario_id);
+  notificarEnApp(avisar, `💬 ${nombreCorto(req.usuario.nombre)} escribió en el paseo “${paseo.titulo}”`, `paseo.html?id=${paseo.id}`);
   res.status(201).end();
 });
 

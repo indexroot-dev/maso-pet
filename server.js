@@ -5,6 +5,7 @@ import { PUERTO, urlPublica } from './config.js';
 import { db } from './db.js';
 import { correoConfigurado } from './correo.js';
 import { CARPETA_FOTOS } from './fotos.js';
+import { leerAjustes, datosTransferencia } from './ajustes.js';
 import { iniciarRecordatorios } from './recordatorios.js';
 import { authRouter, cargarUsuario } from './routes/auth.js';
 import { lugaresRouter } from './routes/lugares.js';
@@ -17,6 +18,8 @@ import { paseosRouter } from './routes/paseos.js';
 import { adopcionesRouter } from './routes/adopciones.js';
 import { cuidadoresRouter } from './routes/cuidadores.js';
 import { eventosRouter } from './routes/eventos.js';
+import { cuentaRouter } from './routes/cuenta.js';
+import { notificacionesRouter } from './routes/notificaciones.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,17 +29,23 @@ if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
 // Las fotos llegan en base64, por eso esas rutas aceptan cuerpos más grandes
 const jsonNormal = express.json({ limit: '100kb' });
 const jsonFotos = express.json({ limit: '5mb' });
-const RUTAS_CON_FOTO = /^\/api\/(mascotas\/\d+\/foto|adopciones(\/\d+)?|cuidadores\/perfil)$/;
+const RUTAS_CON_FOTO = /^\/api\/(mascotas\/\d+\/foto|adopciones(\/\d+)?|cuidadores\/perfil|lugares(\/\d+)?)$/;
 app.use((req, res, next) => (RUTAS_CON_FOTO.test(req.path) ? jsonFotos : jsonNormal)(req, res, next));
 app.use(cargarUsuario);
 
 app.get('/api/info', (req, res) => res.json({ urlApp: urlPublica() }));
 
+// Donaciones y redes sociales (pública: la portada y "Apoyar" se ven sin iniciar sesión)
+app.get('/api/enlaces', (req, res) => {
+  const a = leerAjustes();
+  res.json({ donaciones: a.donaciones_url, transferencia: datosTransferencia(a), tiktok: a.tiktok_url, instagram: a.instagram_url });
+});
+
 // Contador público de la portada (solo el total, guardado 1 minuto en memoria)
 let estadisticas = { usuarios: 0, calculado: 0 };
 app.get('/api/estadisticas', (req, res) => {
   if (Date.now() - estadisticas.calculado > 60_000) {
-    estadisticas = { usuarios: db.prepare('SELECT COUNT(*) AS n FROM usuarios WHERE bloqueado = 0').get().n, calculado: Date.now() };
+    estadisticas = { usuarios: db.prepare('SELECT COUNT(*) AS n FROM usuarios WHERE bloqueado = 0 AND verificado = 1').get().n, calculado: Date.now() };
   }
   res.set('Cache-Control', 'public, max-age=60').json({ usuarios: estadisticas.usuarios });
 });
@@ -51,6 +60,8 @@ app.use('/api/paseos', paseosRouter);
 app.use('/api/adopciones', adopcionesRouter);
 app.use('/api/cuidadores', cuidadoresRouter);
 app.use('/api/eventos', eventosRouter);
+app.use('/api/cuenta', cuentaRouter);
+app.use('/api/notificaciones', notificacionesRouter);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 
 app.use('/fotos', express.static(CARPETA_FOTOS, {

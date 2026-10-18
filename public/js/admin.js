@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const PESTANAS = ['resumen', 'reportes', 'usuarios', 'contenido'];
+const PESTANAS = ['resumen', 'reportes', 'usuarios', 'contenido', 'ajustes'];
 const ICONO_TIPO = { lugar: '📍', resena: '⭐', perdida: '🚨', paseo: '🦮', comentario: '💬', adopcion: '🏠', cuidador: '🤝', resena_cuidador: '⭐', evento: '📅' };
 let yo = null;
 
@@ -12,7 +12,7 @@ function mostrarPestana(nombre) {
   document.querySelectorAll('[data-pestana]').forEach((b) => b.setAttribute('aria-selected', b.dataset.pestana === nombre));
   PESTANAS.forEach((p) => $(`pestana-${p}`).classList.toggle('oculto', p !== nombre));
   history.replaceState(null, '', `#${nombre}`);
-  ({ resumen: cargarResumen, reportes: cargarReportes, usuarios: cargarUsuarios, contenido: cargarContenido })[nombre]();
+  ({ resumen: cargarResumen, reportes: cargarReportes, usuarios: cargarUsuarios, contenido: cargarContenido, ajustes: cargarAjustes })[nombre]();
 }
 
 // ---------- Resumen ----------
@@ -108,8 +108,9 @@ async function cargarUsuarios() {
         <td>${fechaCorta(u.creado_en)}</td>
         <td class="num">${u.mascotas}</td><td class="num">${u.lugares}</td><td class="num">${u.resenas}</td>
         <td class="num">${u.reportes_recibidos ? `<span class="etiqueta alerta">${u.reportes_recibidos}</span>` : '0'}</td>
-        <td>${u.rol === 'admin' ? '<span class="etiqueta">🛡️ Admin</span> ' : ''}${u.bloqueado ? '<span class="etiqueta alerta">Bloqueado</span>' : '<span class="sutil">Activo</span>'}</td>
+        <td>${u.rol === 'admin' ? '<span class="etiqueta">🛡️ Admin</span> ' : ''}${u.bloqueado ? '<span class="etiqueta alerta">Bloqueado</span>' : u.verificado ? '<span class="sutil">Activo</span>' : '<span class="etiqueta pendiente">Sin verificar</span>'}</td>
         <td>${esYo ? '<span class="sutil">(tú)</span>' : `<div class="acciones-tabla">
+          ${u.verificado ? '' : `<button class="btn sec chico" data-usuario="${u.id}" data-verificar="1">✅ Verificar</button>`}
           <button class="btn ${u.bloqueado ? 'sec' : 'peligro'} chico" data-usuario="${u.id}" data-bloquear="${u.bloqueado ? 0 : 1}">${u.bloqueado ? 'Desbloquear' : 'Bloquear'}</button>
           <button class="btn sec chico" data-usuario="${u.id}" data-rol="${u.rol === 'admin' ? 'usuario' : 'admin'}">${u.rol === 'admin' ? 'Quitar admin' : 'Hacer admin'}</button>
           ${u.lugares + u.resenas ? `<button class="btn peligro chico" data-usuario="${u.id}" data-borrar-contenido="${esc(u.nombre)}">Borrar su contenido</button>` : ''}
@@ -129,6 +130,9 @@ $('tabla-usuarios').addEventListener('click', async (e) => {
       const bloquear = boton.dataset.bloquear === '1';
       if (!confirm(bloquear ? '¿Bloquear a este usuario? Se cerrarán sus sesiones y no podrá entrar.' : '¿Desbloquear a este usuario?')) return;
       await api(`/api/admin/usuarios/${id}`, { method: 'PUT', body: { bloqueado: bloquear } });
+    } else if (boton.dataset.verificar) {
+      if (!confirm('¿Verificar esta cuenta a mano? Hazlo solo si confirmaste que el correo es de esa persona.')) return;
+      await api(`/api/admin/usuarios/${id}`, { method: 'PUT', body: { verificado: true } });
     } else if (boton.dataset.rol) {
       if (!confirm(boton.dataset.rol === 'admin' ? '¿Dar permisos de administrador a este usuario?' : '¿Quitarle los permisos de administrador?')) return;
       await api(`/api/admin/usuarios/${id}`, { method: 'PUT', body: { rol: boton.dataset.rol } });
@@ -171,6 +175,36 @@ $('tabla-contenido').addEventListener('click', async (e) => {
     cargarContenido();
   } catch (err) {
     alert(err.message);
+  }
+});
+
+// ---------- Ajustes ----------
+async function cargarAjustes() {
+  const ajustes = await api('/api/admin/ajustes');
+  const form = $('form-ajustes');
+  for (const [clave, valor] of Object.entries(ajustes)) if (form[clave] && valor != null) form[clave].value = valor;
+}
+
+// CuentaRUT: el número de cuenta es el RUT sin dígito verificador, se completa solo
+$('form-ajustes').transferencia_rut.addEventListener('change', (e) => {
+  const form = e.target.form;
+  const cuerpo = e.target.value.replace(/[.\s]/g, '').split('-')[0];
+  if (form.transferencia_tipo.value === 'CuentaRUT' && !form.transferencia_numero.value && /^\d{7,8}$/.test(cuerpo)) {
+    form.transferencia_numero.value = cuerpo;
+  }
+});
+
+$('form-ajustes').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const ajustes = await api('/api/admin/ajustes', { method: 'PUT', body: datosFormulario(e.target) });
+    for (const [clave, valor] of Object.entries(ajustes)) {
+      const campo = e.target[clave];
+      if (campo && (valor != null || campo.tagName !== 'SELECT')) campo.value = valor ?? '';
+    }
+    mostrarAviso($('aviso-ajustes'), 'Guardado ✅', 'ok');
+  } catch (err) {
+    mostrarAviso($('aviso-ajustes'), err.message);
   }
 });
 

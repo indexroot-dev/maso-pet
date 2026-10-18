@@ -1,5 +1,9 @@
-// Los usuarios con sesión van directo al mapa
-usuarioActual.then((u) => { if (u) location.replace('mapa.html'); });
+// Los usuarios con sesión van directo a sus mascotas
+usuarioActual.then((u) => { if (u) location.replace('mascotas.html'); });
+
+enlacesPublicos.then((enlaces) => {
+  if (pintarRedes(document.getElementById('redes'), enlaces)) document.getElementById('siguenos').classList.remove('oculto');
+}).catch(() => {});
 
 // Contador de usuarios registrados (sube desde 0 hasta el total)
 api('/api/estadisticas').then(({ usuarios }) => {
