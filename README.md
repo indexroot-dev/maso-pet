@@ -9,7 +9,7 @@ Aplicación web para:
 - **Compartir la ficha con el veterinario** mediante un enlace o QR temporal de solo lectura (no necesita cuenta).
 - **Libro de control**: anotaciones del día a día (peso, alimentación, medicamentos, paseos, síntomas…) y gráfico de evolución del peso.
 - **Recordatorios por correo** 7 días antes de cada vacuna o desparasitación.
-- **Cuentas de usuario** con verificación del correo por código de 6 números (vence en 15 minutos, 5 intentos), recuperación y cambio de contraseña, cambio de nombre, descarga de todos los datos propios (JSON) y eliminación de la cuenta. El mapa y las fichas son solo para usuarios registrados.
+- **Cuentas de usuario** con verificación opcional del correo por código de 6 números (se activa con `VERIFICAR_CORREO=1`; vence en 15 minutos, 5 intentos), recuperación y cambio de contraseña, cambio de nombre, descarga de todos los datos propios (JSON) y eliminación de la cuenta. El mapa y las fichas son solo para usuarios registrados.
 - **Notificaciones** en la app (campanita del menú): invitaciones y mensajes de paseos, solicitudes de adopción, reseñas recibidas, próximas dosis y mascotas perdidas a menos de 5 km de la zona elegida en "Mi cuenta" (este último también por correo).
 - **Paseos en compañía**: perfil de paseo opcional con zona aproximada (~1 km), vecinos cercanos con sus mascotas (tamaño y carácter), paseos grupales públicos o privados con cupo, invitaciones y conversación de cada paseo. Avisos por correo al invitar, al unirse y al cancelar.
 - **Adopciones**: personas y refugios publican mascotas en adopción (con su ficha de salud si están registradas); los interesados envían una solicitud que llega por correo; estados disponible, en proceso y adoptado.
@@ -81,7 +81,7 @@ public/                Páginas web
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/api/auth/registro` · `/login` · `/logout` | Cuenta y sesión (registro y login de una cuenta sin verificar responden `{verificar: true}` y envían un código) |
+| POST | `/api/auth/registro` · `/login` · `/logout` | Cuenta y sesión (con `VERIFICAR_CORREO=1`, registro y login de una cuenta sin verificar responden `{verificar: true}` y envían un código; sin él, el registro inicia sesión de inmediato) |
 | POST | `/api/auth/verificar` · `/reenviar-codigo` | Verificar el correo `{email, codigo}` (inicia sesión) · pedir otro código |
 | GET | `/api/auth/me` | Usuario actual |
 | POST | `/api/auth/olvide` · `/restablecer` | Recuperar contraseña por correo |

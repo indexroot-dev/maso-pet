@@ -77,6 +77,8 @@ const CUENTA_SUSPENDIDA = 'Tu cuenta está suspendida. Si crees que es un error,
 export const authRouter = Router();
 
 // ---------- Verificar el correo con un código ----------
+// Apagado salvo que VERIFICAR_CORREO=1: sin él, las cuentas quedan activas al crearse
+const VERIFICAR_CORREO = process.env.VERIFICAR_CORREO === '1';
 const MINUTOS_CODIGO = 15;
 const MAX_INTENTOS_CODIGO = 5;
 const NO_SE_ENVIO_CODIGO = 'No pudimos enviarte el código. Inténtalo de nuevo en unos minutos.';
@@ -116,12 +118,19 @@ authRouter.post('/registro', limitador({ max: 10, minutos: 60 }), async (req, re
   // se actualizan los datos y se envía un código nuevo
   const existente = db.prepare('SELECT id, verificado FROM usuarios WHERE email = ?').get(email);
   if (existente?.verificado) return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
+  const verificado = VERIFICAR_CORREO ? 0 : 1;
   let id = existente?.id;
   if (id) {
-    db.prepare('UPDATE usuarios SET nombre = ?, password_hash = ? WHERE id = ?').run(nombre, hashPassword(password), id);
+    db.prepare('UPDATE usuarios SET nombre = ?, password_hash = ?, verificado = ? WHERE id = ?').run(nombre, hashPassword(password), verificado, id);
   } else {
-    id = Number(db.prepare('INSERT INTO usuarios (nombre, email, password_hash, verificado) VALUES (?, ?, ?, 0)')
-      .run(nombre, email, hashPassword(password)).lastInsertRowid);
+    id = Number(db.prepare('INSERT INTO usuarios (nombre, email, password_hash, verificado) VALUES (?, ?, ?, ?)')
+      .run(nombre, email, hashPassword(password), verificado).lastInsertRowid);
+  }
+
+  if (!VERIFICAR_CORREO) {
+    db.prepare('DELETE FROM verificaciones WHERE usuario_id = ?').run(id);
+    crearSesion(res, id);
+    return res.status(201).json({ id, nombre, email, rol: 'usuario' });
   }
 
   try {
@@ -182,8 +191,12 @@ authRouter.post('/login', limitador({ max: 10, minutos: 15 }), async (req, res) 
     return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
   }
   if (usuario.bloqueado) return res.status(403).json({ error: CUENTA_SUSPENDIDA });
-  // Contraseña correcta pero correo sin verificar: se envía un código nuevo
-  if (!usuario.verificado) {
+  // Cuenta creada cuando se pedía el código y la verificación ya está apagada: se activa
+  if (!usuario.verificado && !VERIFICAR_CORREO) {
+    db.prepare('UPDATE usuarios SET verificado = 1 WHERE id = ?').run(usuario.id);
+    db.prepare('DELETE FROM verificaciones WHERE usuario_id = ?').run(usuario.id);
+  } else if (!usuario.verificado) {
+    // Contraseña correcta pero correo sin verificar: se envía un código nuevo
     try {
       await enviarCodigo(usuario);
     } catch (err) {

@@ -32,8 +32,9 @@ document.getElementById('form-registro')?.addEventListener('submit', async (e) =
   const boton = e.target.querySelector('button[type="submit"]');
   boton.disabled = true;
   try {
-    const { email } = await api('/api/auth/registro', { method: 'POST', body: datos });
-    irAVerificar(email);
+    const { verificar, email } = await api('/api/auth/registro', { method: 'POST', body: datos });
+    if (verificar) return irAVerificar(email);
+    location.href = destino();
   } catch (err) {
     mostrarAviso(aviso, err.message);
     boton.disabled = false;
