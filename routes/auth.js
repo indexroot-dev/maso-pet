@@ -25,7 +25,7 @@ function verificarPassword(password, guardado) {
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
-function leerCookie(req, nombre) {
+export function leerCookie(req, nombre) {
   for (const parte of (req.headers.cookie || '').split(';')) {
     const [clave, ...valor] = parte.trim().split('=');
     if (clave === nombre) return decodeURIComponent(valor.join('='));

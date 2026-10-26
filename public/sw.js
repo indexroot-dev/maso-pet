@@ -1,6 +1,6 @@
 // Service worker: permite instalar la app y abrir las páginas sin conexión.
 // Los datos de /api nunca se guardan en caché (son privados de cada usuario).
-const CACHE = 'masopet-v16';
+const CACHE = 'masopet-v17';
 const ARCHIVOS = [
   '/', '/index.html', '/mapa.html', '/login.html', '/registro.html', '/verificar.html', '/mascotas.html', '/ficha.html', '/libro.html',
   '/perdidas.html', '/cuenta.html', '/olvide.html', '/restablecer.html', '/admin.html', '/paseos.html', '/paseo.html',

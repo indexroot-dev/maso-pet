@@ -16,7 +16,7 @@ Aplicación web para:
 - **Paseadores y cuidadores**: perfiles de servicios (paseos, cuidado, visitas, guardería) con tarifa, zona aproximada y cobertura; búsqueda por cercanía o valoración, mensajes por correo y reseñas con estrellas.
 - **Eventos pet-friendly**: ferias, vacunaciones, encuentros, jornadas de adopción y talleres, con filtro por tipo y botón "Asistiré".
 - **Reportes y moderación**: los usuarios reportan cualquier contenido publicado; con 3 reportes el contenido se oculta solo hasta que un administrador lo revise.
-- **Panel de administración**: resumen de la app, revisión de reportes, gestión de usuarios (bloquear, nombrar administradores, borrar su contenido), de todo el contenido publicado y ajustes (enlace de donaciones y redes sociales).
+- **Panel de administración**: resumen de la app (personas que visitaron la página, usuarios activos y personas con la app instalada, contadas una vez por día y sin bots ni administradores), revisión de reportes, gestión de usuarios (bloquear, nombrar administradores, borrar su contenido), de todo el contenido publicado y ajustes (enlace de donaciones y redes sociales).
 - **Apoyar MasoPet**: página pública con el botón de donación y los datos para transferencia (banco, por defecto BancoEstado, tipo y número de cuenta, titular, RUT validado y correo, cada uno con botón para copiar) que el administrador configura en el panel.
 - **Síguenos en TikTok e Instagram**: botones en la portada, en Apoyar MasoPet y en el menú Comunidad (aparecen solo si el administrador configuró la red).
 
@@ -73,6 +73,7 @@ routes/reportes.js     Reportar contenido
 routes/admin.js        API del panel de administración
 notificaciones.js      Notificaciones de la campanita y avisos de mascotas perdidas cerca
 moderacion.js          Reglas de reportes: motivos, ocultado automático, eliminar/mantener
+visitas.js             Contadores del panel: visitantes, usuarios activos y app instalada
 scripts/admin.js       Nombrar administrador desde la terminal
 public/                Páginas web
 ```

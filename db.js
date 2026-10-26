@@ -376,6 +376,26 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS notificaciones_usuario ON notificaciones (usuario_id, leida);
 `);
 
+// Visitantes de la página: una fila por persona (cookie anónima) y día, para el resumen del panel.
+// app = 1 si ese día entró desde la app instalada (APK o ícono en la pantalla de inicio).
+// actividad_usuarios: qué usuarios con cuenta usaron MasoPet cada día (usuarios activos).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS visitas (
+    visitante TEXT NOT NULL,
+    dia TEXT NOT NULL,
+    app INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (visitante, dia)
+  );
+  CREATE INDEX IF NOT EXISTS visitas_dia ON visitas (dia);
+  CREATE TABLE IF NOT EXISTS actividad_usuarios (
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    dia TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, dia)
+  );
+  CREATE INDEX IF NOT EXISTS actividad_usuarios_dia ON actividad_usuarios (dia);
+`);
+agregarColumna('visitas', 'app', 'INTEGER NOT NULL DEFAULT 0');
+
 // Lugares de ejemplo (ficticios) para que el mapa no parta vacío
 const { total } = db.prepare('SELECT COUNT(*) AS total FROM lugares').get();
 if (total === 0) {

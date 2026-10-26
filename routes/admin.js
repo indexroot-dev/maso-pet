@@ -12,6 +12,15 @@ const contar = (sql, ...params) => db.prepare(sql).get(...params).n;
 // ---------- Resumen ----------
 adminRouter.get('/resumen', (req, res) => {
   res.json({
+    visitantes: contar('SELECT COUNT(DISTINCT visitante) AS n FROM visitas'),
+    visitantes_hoy: contar("SELECT COUNT(*) AS n FROM visitas WHERE dia = date('now', 'localtime')"),
+    visitantes_semana: contar("SELECT COUNT(DISTINCT visitante) AS n FROM visitas WHERE dia >= date('now', 'localtime', '-6 days')"),
+    app: contar('SELECT COUNT(DISTINCT visitante) AS n FROM visitas WHERE app = 1'),
+    app_hoy: contar("SELECT COUNT(*) AS n FROM visitas WHERE app = 1 AND dia = date('now', 'localtime')"),
+    app_semana: contar("SELECT COUNT(DISTINCT visitante) AS n FROM visitas WHERE app = 1 AND dia >= date('now', 'localtime', '-6 days')"),
+    activos_hoy: contar("SELECT COUNT(*) AS n FROM actividad_usuarios WHERE dia = date('now', 'localtime')"),
+    activos_semana: contar("SELECT COUNT(DISTINCT usuario_id) AS n FROM actividad_usuarios WHERE dia >= date('now', 'localtime', '-6 days')"),
+    activos_mes: contar("SELECT COUNT(DISTINCT usuario_id) AS n FROM actividad_usuarios WHERE dia >= date('now', 'localtime', '-29 days')"),
     usuarios: contar('SELECT COUNT(*) AS n FROM usuarios'),
     usuarios_nuevos: contar("SELECT COUNT(*) AS n FROM usuarios WHERE creado_en >= datetime('now', '-7 days')"),
     bloqueados: contar('SELECT COUNT(*) AS n FROM usuarios WHERE bloqueado = 1'),

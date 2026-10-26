@@ -20,6 +20,7 @@ import { cuidadoresRouter } from './routes/cuidadores.js';
 import { eventosRouter } from './routes/eventos.js';
 import { cuentaRouter } from './routes/cuenta.js';
 import { notificacionesRouter } from './routes/notificaciones.js';
+import { contarVisitas, contarActividad } from './visitas.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -32,6 +33,7 @@ const jsonFotos = express.json({ limit: '5mb' });
 const RUTAS_CON_FOTO = /^\/api\/(mascotas\/\d+\/foto|adopciones(\/\d+)?|cuidadores\/perfil|lugares(\/\d+)?)$/;
 app.use((req, res, next) => (RUTAS_CON_FOTO.test(req.path) ? jsonFotos : jsonNormal)(req, res, next));
 app.use(cargarUsuario);
+app.use(contarActividad);
 
 app.get('/api/info', (req, res) => res.json({ urlApp: urlPublica() }));
 
@@ -69,6 +71,7 @@ app.use('/fotos', express.static(CARPETA_FOTOS, {
   immutable: true,
   setHeaders: (res) => res.set({ 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'none'" }),
 }));
+app.use(contarVisitas);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((err, req, res, next) => {

@@ -20,6 +20,9 @@ async function cargarResumen() {
   const r = await api('/api/admin/resumen');
   actualizarContador(r.reportes_pendientes);
   const tiles = [
+    ['Personas que visitaron la página', r.visitantes, `${r.visitantes_hoy.toLocaleString('es-CL')} hoy · ${r.visitantes_semana.toLocaleString('es-CL')} en los últimos 7 días`],
+    ['Usuarios activos (últimos 30 días)', r.activos_mes, `${r.activos_hoy.toLocaleString('es-CL')} hoy · ${r.activos_semana.toLocaleString('es-CL')} en los últimos 7 días`],
+    ['Personas con la app instalada', r.app, `${r.app_hoy.toLocaleString('es-CL')} hoy · ${r.app_semana.toLocaleString('es-CL')} en los últimos 7 días`],
     ['Usuarios', r.usuarios, r.usuarios_nuevos ? `+${r.usuarios_nuevos} esta semana` : 'Sin registros nuevos esta semana'],
     ['Mascotas registradas', r.mascotas],
     ['Lugares en el mapa', r.lugares, r.lugares_nuevos ? `+${r.lugares_nuevos} esta semana` : ''],
