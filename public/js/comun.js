@@ -68,18 +68,30 @@ function ubicacionNavegador() {
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => resolver({ lat: coords.latitude, lng: coords.longitude }),
       () => rechazar(new Error('No pudimos obtener tu ubicación. Revisa los permisos del navegador.')),
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5 * 60 * 1000 },
     );
   });
 }
 
-// Mapa pequeño para elegir un punto (requiere Leaflet en la página)
+// Centra un mapa en la ubicación actual y la marca con un punto azul. Sin alertas: si no hay
+// permiso, el mapa queda donde estaba. sinMover() = true cuando ya hay algo marcado que no hay que perder de vista.
+function centrarEnUbicacion(mapa, { zoom = 15, sinMover = () => false } = {}) {
+  return ubicacionNavegador().then((punto) => {
+    L.circleMarker([punto.lat, punto.lng], { radius: 8, color: '#fff', weight: 2, fillColor: '#2b6cb0', fillOpacity: 1 })
+      .addTo(mapa).bindPopup('Estás aquí');
+    if (!sinMover()) mapa.setView([punto.lat, punto.lng], zoom);
+    return punto;
+  }).catch(() => null);
+}
+
+// Mapa pequeño para elegir un punto (requiere Leaflet en la página). Parte en la ubicación actual.
 function mapaSelector(id, alElegir, centro = [-33.4372, -70.6206]) {
   const mapa = L.map(id).setView(centro, 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(mapa);
   let marcador = null;
+  centrarEnUbicacion(mapa, { sinMover: () => Boolean(marcador) });
   const marcar = (latlng, centrar = false) => {
     if (marcador) marcador.setLatLng(latlng);
     else marcador = L.marker(latlng).addTo(mapa);

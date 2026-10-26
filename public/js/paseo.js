@@ -58,6 +58,12 @@ async function cargar() {
       maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(mapa);
     L.marker([paseo.lat, paseo.lng]).addTo(mapa).bindPopup(esc(paseo.punto));
+    // Muestra también dónde estás; si estás cerca (menos de 20 km), encuadra los dos puntos
+    centrarEnUbicacion(mapa, { sinMover: () => true }).then((punto) => {
+      if (punto && distanciaKm(punto, paseo) < 20) {
+        mapa.fitBounds([[punto.lat, punto.lng], [paseo.lat, paseo.lng]], { padding: [40, 40], maxZoom: 16 });
+      }
+    });
   }
 
   $('cupo').textContent = `(${paseo.asistentes}${paseo.cupo ? ` de ${paseo.cupo}` : ''})`;

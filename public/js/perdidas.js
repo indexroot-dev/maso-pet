@@ -64,6 +64,7 @@ async function abrirFormulario() {
       maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(mapaReporte);
     mapaReporte.on('click', (e) => marcar(e.latlng));
+    centrarEnUbicacion(mapaReporte, { sinMover: () => Boolean(marcador) });
   }
   setTimeout(() => mapaReporte.invalidateSize(), 50);
   form.scrollIntoView({ behavior: 'smooth' });

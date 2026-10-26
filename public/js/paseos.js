@@ -16,12 +16,14 @@ const hoyISO = () => {
 };
 const textoKm = (km) => (km <= 0.5 ? 'a menos de 1 km' : `a ~${String(km).replace('.', ',')} km`);
 
-function crearMapa(id, alHacerClic) {
+// Parte en la ubicación actual, salvo que ya haya un punto marcado (yaMarcado)
+function crearMapa(id, alHacerClic, yaMarcado) {
   const mapa = L.map(id).setView(CENTRO, 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(mapa);
   mapa.on('click', (e) => alHacerClic(e.latlng));
+  centrarEnUbicacion(mapa, { sinMover: yaMarcado });
   return mapa;
 }
 
@@ -90,7 +92,7 @@ async function abrirFormularioPaseo() {
   if (!formPaseo.fecha.value) formPaseo.fecha.value = hoyISO();
   pintarInvitados();
   if (!mapaNuevo) {
-    mapaNuevo = crearMapa('mapa-paseo-nuevo', (latlng) => marcarPunto(latlng));
+    mapaNuevo = crearMapa('mapa-paseo-nuevo', (latlng) => marcarPunto(latlng), () => Boolean(marcadorNuevo));
     const lugares = await api('/api/lugares').catch(() => []);
     lugares.sort((a, b) => (b.categoria === 'parque') - (a.categoria === 'parque') || a.nombre.localeCompare(b.nombre));
     $('select-lugar').insertAdjacentHTML('beforeend', lugares.map((l) =>
@@ -204,7 +206,7 @@ async function cargarPerfil() {
   formPerfil.descripcion.value = perfil?.descripcion || '';
   formPerfil.querySelectorAll('[name="horarios"]').forEach((c) => { c.checked = perfil?.horarios.includes(c.value) || false; });
 
-  if (!mapaZona) mapaZona = crearMapa('mapa-zona', (latlng) => marcarZona(latlng));
+  if (!mapaZona) mapaZona = crearMapa('mapa-zona', (latlng) => marcarZona(latlng), () => Boolean(marcadorZona));
   setTimeout(() => mapaZona.invalidateSize(), 50);
   if (perfil?.lat) marcarZona(L.latLng(perfil.lat, perfil.lng), true);
 }
