@@ -1,10 +1,10 @@
 // Service worker: permite instalar la app y abrir las páginas sin conexión.
 // Los datos de /api nunca se guardan en caché (son privados de cada usuario).
-const CACHE = 'masopet-v19';
+const CACHE = 'masopet-v20';
 const ARCHIVOS = [
   '/', '/index.html', '/mapa.html', '/login.html', '/registro.html', '/verificar.html', '/mascotas.html', '/ficha.html', '/libro.html',
   '/perdidas.html', '/cuenta.html', '/olvide.html', '/restablecer.html', '/admin.html', '/paseos.html', '/paseo.html',
-  '/adopciones.html', '/adopcion.html', '/cuidadores.html', '/cuidador.html', '/eventos.html', '/notificaciones.html', '/apoyar.html',
+  '/adopciones.html', '/adopcion.html', '/cuidadores.html', '/cuidador.html', '/eventos.html', '/notificaciones.html', '/apoyar.html', '/privacidad.html',
   '/css/styles.css', '/js/comun.js', '/js/mapa.js', '/js/auth.js', '/js/mascotas.js', '/js/ficha.js', '/js/libro.js',
   '/js/perdidas.js', '/js/cuenta.js', '/js/admin.js', '/js/paseos.js', '/js/paseo.js',
   '/js/adopciones.js', '/js/adopcion.js', '/js/cuidadores.js', '/js/cuidador.js', '/js/eventos.js', '/js/notificaciones.js', '/js/apoyar.js',

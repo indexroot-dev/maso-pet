@@ -530,3 +530,10 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .datos-banco dt { color: var(--gris); font-size: .9rem; }
 .datos-banco dd { margin: 0; display: flex; gap: .6rem; align-items: baseline; font-weight: 600; text-align: right; }
 .datos-banco .enlace-boton { font-size: .8rem; font-weight: 400; }
+
+/* ---------- Política de privacidad ---------- */
+.legal h2 { margin-top: 0; }
+.legal h3 { font-size: 1rem; margin: 1rem 0 .4rem; color: var(--verde); }
+.legal ul { padding-left: 1.2rem; margin: .4rem 0 .8rem; }
+.legal li { margin-bottom: .35rem; }
+.pie-legal { text-align: center; font-size: .85rem; margin: 1.5rem 0 0; }
