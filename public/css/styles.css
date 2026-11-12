@@ -23,7 +23,9 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--texto);
-  background: var(--fondo);
+  /* Fondo blanco con siluetas de mascotas (perros, gatos, conejos, huellas...) en todas las páginas */
+  background: var(--blanco) url("../img/siluetas.svg") repeat;
+  background-size: 420px 420px;
   line-height: 1.5;
 }
 
