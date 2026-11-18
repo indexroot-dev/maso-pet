@@ -7,14 +7,16 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- usesCleartextTraffic: necesario mientras el servidor sea http (red local).
-         Al publicar con HTTPS se puede quitar. -->
+    <!-- usesCleartextTraffic: construir-apk.ps1 lo pone en "true" solo si el servidor es http (red local);
+         con https (masopet.cl) queda en "false".
+         enableOnBackInvokedCallback: el botón "atrás" se maneja en MainActivity (obligatorio desde Android 16). -->
     <application
         android:label="MasoPet"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:allowBackup="false"
-        android:usesCleartextTraffic="true"
+        android:usesCleartextTraffic="__TEXTO_PLANO__"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
 
         <activity

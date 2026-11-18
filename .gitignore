@@ -8,3 +8,4 @@ android/firma/
 android/*.apk
 public/descargas/
 android/*.idsig
+android/*.aab

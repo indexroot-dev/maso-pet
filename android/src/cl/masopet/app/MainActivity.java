@@ -6,9 +6,17 @@ import android.app.DownloadManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.widget.FrameLayout;
+import android.window.OnBackInvokedDispatcher;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
 import android.webkit.CookieManager;
@@ -31,6 +39,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
     private static final String URL_APP = "__URL_APP__";
+    private static final int VERDE = Color.parseColor("#0F766E");
     private static final int PEDIR_UBICACION = 1;
     private static final int ELEGIR_ARCHIVO = 2;
 
@@ -42,10 +51,51 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle estadoGuardado) {
         super.onCreate(estadoGuardado);
-        getWindow().setStatusBarColor(Color.parseColor("#0F766E"));
 
         web = new WebView(this);
-        setContentView(web);
+        if (Build.VERSION.SDK_INT >= 30) {
+            // Android 15 o más nuevo dibuja la app bajo las barras del sistema (hora, batería, botones).
+            // Se deja ese espacio libre: verde arriba (detrás de la hora) y blanco abajo; el teclado tampoco tapa la página.
+            FrameLayout raiz = new FrameLayout(this);
+            raiz.setBackgroundColor(Color.WHITE);
+            View barraSuperior = new View(this);
+            barraSuperior.setBackgroundColor(VERDE);
+            FrameLayout.LayoutParams posicionBarra = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
+            raiz.addView(barraSuperior, posicionBarra);
+            FrameLayout.LayoutParams posicionWeb = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            raiz.addView(web, posicionWeb);
+            raiz.setOnApplyWindowInsetsListener((vista, insets) -> {
+                Insets barras = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                Insets teclado = insets.getInsets(WindowInsets.Type.ime());
+                posicionBarra.height = barras.top;
+                barraSuperior.setLayoutParams(posicionBarra);
+                posicionWeb.setMargins(barras.left, barras.top, barras.right, Math.max(barras.bottom, teclado.bottom));
+                web.setLayoutParams(posicionWeb);
+                return WindowInsets.CONSUMED;
+            });
+            setContentView(raiz);
+            getWindow().setDecorFitsSystemWindows(false);
+            // En Android 11 a 14 las barras tienen color propio: se dejan transparentes para que se vea el verde/blanco
+            getWindow().setStatusBarColor(Color.TRANSPARENT);
+            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            // Íconos claros sobre el verde de arriba y oscuros sobre el blanco de abajo
+            WindowInsetsController controlador = getWindow().getInsetsController();
+            if (controlador != null) {
+                controlador.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+            }
+        } else {
+            getWindow().setStatusBarColor(VERDE);
+            setContentView(web);
+        }
+
+        // Botón "atrás": vuelve a la página anterior; si no hay, cierra la app (Android 13 o más nuevo)
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
+                if (web.canGoBack()) web.goBack();
+                else finish();
+            });
+        }
 
         WebSettings ajustes = web.getSettings();
         ajustes.setJavaScriptEnabled(true);
