@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { db } from '../db.js';
 import { limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
-import { enviarRecordatorio, proximasDosis } from '../recordatorios.js';
+import { enviarRecordatorio, recordatoriosDe } from '../recordatorios.js';
 import { borrarFoto } from '../fotos.js';
 import { traspasarMascotas } from '../tutores.js';
 
@@ -319,7 +319,7 @@ authRouter.delete('/cuenta', requiereLogin, limitador({ max: 10, minutos: 15 }),
 
 authRouter.post('/recordatorio-prueba', requiereLogin, limitador({ max: 3, minutos: 60 }), async (req, res) => {
   try {
-    await enviarRecordatorio(req.usuario, proximasDosis(req.usuario.id));
+    await enviarRecordatorio(req.usuario, recordatoriosDe(req.usuario.id));
     res.json({ mensaje: `Te enviamos un correo de prueba a ${req.usuario.email}` });
   } catch (err) {
     console.error('Error al enviar correo de prueba:', err.message);

@@ -177,12 +177,27 @@ async function iniciarNav() {
            </details>
            ${enlace('mapa.html', 'Mapa')}
            ${usuario.rol === 'admin' ? enlace('admin.html', '🛡️ Admin') : ''}
-           <a href="notificaciones.html" class="campana ${pagina === 'notificaciones.html' ? 'activo' : ''}" aria-label="Notificaciones">🔔<span class="globo oculto" id="globo-notificaciones"></span></a>
            ${enlace('cuenta.html', `👤 ${esc(usuario.nombre.split(' ')[0])}`)}
            <button id="btn-salir" type="button">Salir</button>`
         : `${enlace('login.html', 'Iniciar sesión')}
            <a class="btn chico" href="registro.html">Crear cuenta</a>`}
-    </nav>`;
+    </nav>
+    ${usuario
+      ? `<div class="nav-derecha">
+           <a href="notificaciones.html" class="campana ${pagina === 'notificaciones.html' ? 'activo' : ''}" aria-label="Notificaciones">🔔<span class="globo oculto" id="globo-notificaciones"></span></a>
+           <button class="btn-menu" id="btn-menu" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-principal">☰</button>
+         </div>`
+      : ''}`;
+  nav.querySelector('nav').id = 'menu-principal';
+
+  // En el celular el menú se esconde tras el botón ☰ (en el computador se ve completo)
+  nav.classList.toggle('con-menu', Boolean(usuario));
+  document.getElementById('btn-menu')?.addEventListener('click', (e) => {
+    const abierto = nav.classList.toggle('abierto');
+    e.currentTarget.setAttribute('aria-expanded', String(abierto));
+    e.currentTarget.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+    e.currentTarget.textContent = abierto ? '✕' : '☰';
+  });
 
   document.getElementById('btn-salir')?.addEventListener('click', async () => {
     await api('/api/auth/logout', { method: 'POST' });

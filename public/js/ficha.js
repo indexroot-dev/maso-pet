@@ -6,7 +6,20 @@ const COLUMNAS = {
   vacunas: [['fecha', 'Fecha', formatearFecha], ['nombre', 'Vacuna'], ['proxima_fecha', 'Próxima dosis', formatearFecha], ['veterinario', 'Veterinario/a'], ['notas', 'Notas']],
   desparasitaciones: [['fecha', 'Fecha', formatearFecha], ['producto', 'Producto'], ['tipo', 'Tipo'], ['proxima_fecha', 'Próxima dosis', formatearFecha], ['notas', 'Notas']],
   consultas: [['fecha', 'Fecha', formatearFecha], ['motivo', 'Motivo'], ['diagnostico', 'Diagnóstico'], ['tratamiento', 'Tratamiento'], ['veterinario', 'Veterinario/a'], ['peso', 'Peso', (p) => (p ? `${p} kg` : '—')]],
+  medicamentos: [['nombre', 'Medicamento'], ['dosis', 'Dosis'], ['cada_dias', 'Frecuencia', frecuencia], ['horario', 'Horario'], ['fecha_inicio', 'Desde', formatearFecha], ['fecha_fin', 'Hasta', (f) => (f ? formatearFecha(f) : 'Sin término')], ['notas', 'Notas']],
+  citas: [['fecha', 'Fecha', formatearFecha], ['hora', 'Hora'], ['motivo', 'Motivo'], ['veterinario', 'Veterinario/a o clínica'], ['notas', 'Notas']],
 };
+
+// Fecha de hoy (o dentro de N días) en la hora de Chile, como 2026-11-17
+function fechaLocalISO(dias = 0) {
+  const d = new Date(Date.now() + dias * 864e5);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+}
+
+// Cada cuántos días se da un medicamento, en palabras
+function frecuencia(dias) {
+  return { 1: 'Todos los días', 2: 'Día por medio', 7: 'Una vez a la semana', 15: 'Cada 15 días', 30: 'Una vez al mes' }[dias] || `Cada ${dias} días`;
+}
 
 function pintarTabla(seccion, registros) {
   const columnas = COLUMNAS[seccion];
@@ -22,8 +35,8 @@ function pintarTabla(seccion, registros) {
 }
 
 function pintarRecordatorios(ficha) {
-  const hoy = new Date().toISOString().slice(0, 10);
-  const limite = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
+  const hoy = fechaLocalISO();
+  const limite = fechaLocalISO(60);
 
   // Solo la dosis más reciente de cada vacuna/producto cuenta para el recordatorio
   const ultimos = new Map();
@@ -34,14 +47,29 @@ function pintarRecordatorios(ficha) {
     .filter((r) => r.proxima_fecha && r.proxima_fecha <= limite)
     .sort((a, b) => a.proxima_fecha.localeCompare(b.proxima_fecha));
 
-  $('seccion-recordatorios').classList.toggle('oculto', !proximos.length);
-  $('recordatorios').innerHTML = proximos.map((r) => {
-    const vencido = r.proxima_fecha < hoy;
-    return `<div class="recordatorio ${vencido ? 'vencido' : ''}">
-      <span>${esc(r.etiqueta)}</span>
-      <strong>${vencido ? 'Atrasada desde' : 'Toca el'} ${formatearFecha(r.proxima_fecha)}</strong>
-    </div>`;
-  }).join('');
+  // Medicamentos en curso y citas que vienen
+  const enCurso = ficha.medicamentos.filter((x) => x.fecha_inicio <= hoy && (!x.fecha_fin || x.fecha_fin >= hoy));
+  const citas = ficha.citas.filter((c) => c.fecha >= hoy && c.fecha <= limite).sort((a, b) => `${a.fecha}${a.hora || ''}`.localeCompare(`${b.fecha}${b.hora || ''}`));
+
+  const html = [
+    ...enCurso.map((x) => `<div class="recordatorio medicamento">
+      <span>💊 ${esc(x.nombre)}${x.dosis ? ` <span class="sutil">(${esc(x.dosis)})</span>` : ''}</span>
+      <strong>${esc(frecuencia(x.cada_dias))}${x.horario ? ` · ${esc(x.horario)}` : ''}${x.fecha_fin ? ` · hasta el ${formatearFecha(x.fecha_fin)}` : ''}</strong>
+    </div>`),
+    ...citas.map((c) => `<div class="recordatorio cita">
+      <span>🩺 ${esc(c.motivo)}${c.veterinario ? ` <span class="sutil">(${esc(c.veterinario)})</span>` : ''}</span>
+      <strong>${c.fecha === hoy ? 'Hoy' : `El ${formatearFecha(c.fecha)}`}${c.hora ? ` a las ${esc(c.hora)}` : ''}</strong>
+    </div>`),
+    ...proximos.map((r) => {
+      const vencido = r.proxima_fecha < hoy;
+      return `<div class="recordatorio ${vencido ? 'vencido' : ''}">
+        <span>${esc(r.etiqueta)}</span>
+        <strong>${vencido ? 'Atrasada desde' : 'Toca el'} ${formatearFecha(r.proxima_fecha)}</strong>
+      </div>`;
+    }),
+  ];
+  $('seccion-recordatorios').classList.toggle('oculto', !html.length);
+  $('recordatorios').innerHTML = html.join('');
 }
 
 function pintarDatos(m) {
@@ -273,6 +301,9 @@ $('btn-eliminar').addEventListener('click', async () => {
   await api(`/api/mascotas/${idMascota}`, { method: 'DELETE' });
   location.href = 'mascotas.html';
 });
+
+// "Desde" del medicamento parte en hoy (y vuelve a hoy al limpiar el formulario)
+document.querySelector('form[data-seccion="medicamentos"] [name="fecha_inicio"]').defaultValue = fechaLocalISO();
 
 requerirSesion().then((u) => {
   if (!u) return;

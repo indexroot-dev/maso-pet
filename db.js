@@ -420,6 +420,30 @@ db.exec(`
     PRIMARY KEY (usuario_id, tabla, registro_id, proxima_fecha)
   );
 `);
+// Citas al veterinario y medicamentos (con recordatorio el día anterior a la cita y cada día que toca el medicamento)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS citas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mascota_id INTEGER NOT NULL REFERENCES mascotas(id) ON DELETE CASCADE,
+    fecha TEXT NOT NULL,
+    hora TEXT,
+    motivo TEXT NOT NULL,
+    veterinario TEXT,
+    notas TEXT
+  );
+  CREATE TABLE IF NOT EXISTS medicamentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mascota_id INTEGER NOT NULL REFERENCES mascotas(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    dosis TEXT,
+    cada_dias INTEGER NOT NULL DEFAULT 1, -- 1 = todos los días, 7 = cada semana, etc.
+    horario TEXT,                          -- texto libre, ej: "8:00 y 20:00"
+    fecha_inicio TEXT NOT NULL,
+    fecha_fin TEXT,                        -- vacío = sin fecha de término
+    notas TEXT
+  );
+`);
+
 // Una sola vez: lo ya avisado antes queda a nombre del dueño de cada mascota (para no repetir correos)
 if (!db.prepare('SELECT 1 FROM recordatorios_avisados LIMIT 1').get()) {
   db.exec(`

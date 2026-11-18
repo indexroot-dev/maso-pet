@@ -27,6 +27,17 @@ const SECCIONES = {
     requeridos: ['fecha', 'motivo'],
     orden: 'fecha DESC',
   },
+  citas: {
+    campos: ['fecha', 'hora', 'motivo', 'veterinario', 'notas'],
+    requeridos: ['fecha', 'motivo'],
+    orden: 'fecha DESC, hora DESC',
+  },
+  medicamentos: {
+    campos: ['nombre', 'dosis', 'cada_dias', 'horario', 'fecha_inicio', 'fecha_fin', 'notas'],
+    requeridos: ['nombre', 'fecha_inicio'],
+    orden: 'fecha_inicio DESC, id DESC',
+    validar: (d) => (d.fecha_fin && d.fecha_fin < d.fecha_inicio ? 'La fecha de término no puede ser anterior a la de inicio' : null),
+  },
   libro: {
     campos: ['fecha', 'tipo', 'titulo', 'detalle', 'peso'],
     requeridos: ['fecha', 'tipo', 'titulo'],
@@ -41,6 +52,9 @@ function limpiar(campo, valor) {
     return valor === '' || valor == null || !Number.isFinite(numero) || numero < 0 ? null : numero;
   }
   if (campo === 'esterilizado') return valor === true || valor === 1 || valor === '1' || valor === 'on' ? 1 : 0;
+  // Cada cuántos días se da un medicamento (1 = todos los días)
+  if (campo === 'cada_dias') return Math.min(365, Math.max(1, Math.round(Number(valor)) || 1));
+  if (campo === 'hora') return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(valor ?? '')) ? String(valor) : null;
   const texto = String(valor ?? '').trim().slice(0, 2000);
   return texto || null;
 }
@@ -269,6 +283,8 @@ mascotasRouter.post('/:id/:seccion', (req, res) => {
   if (faltante) return res.status(400).json({ error: `El campo "${faltante.replace('_', ' ')}" es obligatorio` });
   const invalido = Object.entries(config.opciones || {}).find(([c, validos]) => !validos.includes(datos[c]));
   if (invalido) return res.status(400).json({ error: `El valor de "${invalido[0]}" no es válido` });
+  const problema = config.validar?.(datos);
+  if (problema) return res.status(400).json({ error: problema });
 
   const columnas = ['mascota_id', ...config.campos];
   const { lastInsertRowid } = db.prepare(

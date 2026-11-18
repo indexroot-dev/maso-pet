@@ -132,7 +132,7 @@
 
     <!-- Recordatorios -->
     <section class="tarjeta oculto" id="seccion-recordatorios">
-      <h2>⏰ Próximas dosis</h2>
+      <h2>⏰ Próximos recordatorios</h2>
       <div id="recordatorios"></div>
     </section>
 
@@ -178,6 +178,58 @@
             <label class="ancho">Notas<input name="notas"></label>
           </div>
           <button class="btn" type="submit">Guardar desparasitación</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- Medicamentos -->
+    <section class="tarjeta">
+      <h2>💊 Medicamentos</h2>
+      <div class="tabla-scroll" id="tabla-medicamentos"></div>
+      <details>
+        <summary>＋ Agregar medicamento</summary>
+        <form data-seccion="medicamentos">
+          <div class="aviso-form"></div>
+          <div class="campos">
+            <label>Medicamento *<input name="nombre" required maxlength="120" placeholder="Ej: Amoxicilina, Meloxicam"></label>
+            <label>Dosis<input name="dosis" maxlength="120" placeholder="Ej: 1 comprimido, 5 ml"></label>
+            <label>Frecuencia
+              <select name="cada_dias">
+                <option value="1">Todos los días</option>
+                <option value="2">Día por medio</option>
+                <option value="7">Una vez a la semana</option>
+                <option value="15">Cada 15 días</option>
+                <option value="30">Una vez al mes</option>
+              </select>
+            </label>
+            <label>Horario<input name="horario" maxlength="120" placeholder="Ej: 8:00 y 20:00, con comida"></label>
+            <label>Desde *<input name="fecha_inicio" type="date" required></label>
+            <label>Hasta<input name="fecha_fin" type="date" aria-describedby="ayuda-hasta"></label>
+            <label class="ancho">Notas<input name="notas" placeholder="Indicaciones del veterinario, efectos, etc."></label>
+          </div>
+          <p class="sutil" id="ayuda-hasta">Te avisaremos por correo y en la campanita 🔔 cada día que toque dárselo. Si es un tratamiento permanente, deja “Hasta” vacío.</p>
+          <button class="btn" type="submit">Guardar medicamento</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- Citas al veterinario -->
+    <section class="tarjeta">
+      <h2>📅 Citas al veterinario</h2>
+      <div class="tabla-scroll" id="tabla-citas"></div>
+      <details>
+        <summary>＋ Agendar cita</summary>
+        <form data-seccion="citas">
+          <div class="aviso-form"></div>
+          <div class="campos">
+            <label>Fecha *<input name="fecha" type="date" required></label>
+            <label>Hora<input name="hora" type="time"></label>
+            <label>Motivo *<input name="motivo" required maxlength="200" placeholder="Ej: Control, vacuna, cirugía"></label>
+            <label>Veterinario/a o clínica<input name="veterinario" maxlength="120"></label>
+            <label class="ancho">Notas<input name="notas" placeholder="Ej: ir en ayunas, llevar exámenes"></label>
+          </div>
+          <p class="sutil">Te avisaremos el día anterior y el mismo día de la cita.</p>
+          <button class="btn" type="submit">Guardar cita</button>
         </form>
       </details>
     </section>

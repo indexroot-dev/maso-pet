@@ -47,7 +47,13 @@ a { color: var(--verde); }
 .logo img { height: 38px; width: auto; }
 .logo .maso { color: var(--marca); font-family: "Segoe UI", system-ui, sans-serif; }
 .logo .pet { color: #111; font-family: Rockwell, "Roboto Slab", Georgia, serif; font-weight: 900; }
-.nav nav { display: flex; align-items: center; gap: .25rem; flex-wrap: wrap; }
+.nav nav { display: flex; align-items: center; gap: .25rem; flex-wrap: wrap; margin-left: auto; }
+/* Campana y botón ☰ (este último solo en el celular) */
+.nav-derecha { display: flex; align-items: center; gap: .25rem; }
+.nav-derecha a { padding: .4rem .6rem; border-radius: 8px; text-decoration: none; color: var(--texto); }
+.nav-derecha a:hover { background: var(--verde-claro); }
+.btn-menu { display: none; width: 44px; height: 44px; border: 1px solid var(--borde); border-radius: 10px; background: var(--blanco); font-size: 1.35rem; line-height: 1; color: var(--texto); cursor: pointer; }
+.btn-menu:hover { background: var(--verde-claro); }
 .nav nav a, .nav nav button {
   padding: .4rem .75rem; border-radius: 8px; border: 0; background: none;
   color: var(--texto); text-decoration: none; font: inherit; cursor: pointer;
@@ -392,6 +398,18 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .nav { gap: .25rem; padding: .4rem .75rem; }
   .nav nav { gap: 0; }
   .nav nav a, .nav nav button { padding: .3rem .5rem; font-size: .9rem; }
+  /* Con sesión: logo + 🔔 + ☰ en una fila; el menú se abre como lista debajo */
+  .nav.con-menu .nav-derecha { margin-left: auto; }
+  .nav.con-menu .btn-menu { display: inline-flex; align-items: center; justify-content: center; }
+  .nav.con-menu nav {
+    display: none; order: 3; flex-basis: 100%; margin-left: 0;
+    flex-direction: column; align-items: stretch; padding: .35rem 0 .5rem; border-top: 1px solid var(--borde);
+    max-height: calc(100vh - 70px); overflow-y: auto;
+  }
+  .nav.con-menu.abierto nav { display: flex; }
+  .nav.con-menu nav > a, .nav.con-menu nav > button, .nav.con-menu .menu-comunidad summary { padding: .75rem .6rem; font-size: 1.05rem; text-align: left; }
+  .nav.con-menu .menu-comunidad .submenu { border: 0; padding: 0 0 0 1rem; margin: 0; }
+  .nav.con-menu .menu-comunidad .submenu a { padding: .65rem .6rem; font-size: 1rem; }
 }
 
 /* ---------- Menú Comunidad ---------- */
@@ -475,7 +493,7 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 
 /* ---------- Notificaciones ---------- */
-.nav nav a.campana { position: relative; font-size: 1.1rem; }
+.nav a.campana { position: relative; font-size: 1.1rem; }
 .globo {
   position: absolute; top: 0; right: 0; min-width: 18px; height: 18px; padding: 0 4px;
   border-radius: 9px; background: var(--rojo); color: #fff; font-size: .7rem; font-weight: 700; line-height: 18px; text-align: center;
@@ -547,3 +565,8 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .tutor-datos { flex: 1; min-width: 160px; }
 .invitacion { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; border-left: 6px solid var(--marca); }
 .invitacion-texto { flex: 1; min-width: 220px; }
+
+/* ---------- Recordatorios de medicamentos y citas ---------- */
+.recordatorio.medicamento { background: #eef4ff; color: #1e40af; }
+.recordatorio.cita { background: var(--verde-claro); color: var(--verde-osc); }
+.recordatorio .sutil { color: inherit; opacity: .8; font-size: .85em; }

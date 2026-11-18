@@ -47,6 +47,8 @@ async function cargar() {
 
   tabla('tabla-vacunas', [['fecha', 'Fecha', formatearFecha], ['nombre', 'Vacuna'], ['proxima_fecha', 'Próxima dosis', formatearFecha], ['veterinario', 'Veterinario/a'], ['notas', 'Notas']], m.vacunas);
   tabla('tabla-desparasitaciones', [['fecha', 'Fecha', formatearFecha], ['producto', 'Producto'], ['tipo', 'Tipo'], ['proxima_fecha', 'Próxima dosis', formatearFecha]], m.desparasitaciones);
+  const frecuencia = (d) => ({ 1: 'Todos los días', 2: 'Día por medio', 7: 'Una vez a la semana', 15: 'Cada 15 días', 30: 'Una vez al mes' }[d] || `Cada ${d} días`);
+  tabla('tabla-medicamentos', [['nombre', 'Medicamento'], ['dosis', 'Dosis'], ['cada_dias', 'Frecuencia', frecuencia], ['horario', 'Horario'], ['fecha_inicio', 'Desde', formatearFecha], ['fecha_fin', 'Hasta', (f) => (f ? formatearFecha(f) : 'Sin término')]], m.medicamentos || []);
   tabla('tabla-consultas', [['fecha', 'Fecha', formatearFecha], ['motivo', 'Motivo'], ['diagnostico', 'Diagnóstico'], ['tratamiento', 'Tratamiento'], ['veterinario', 'Veterinario/a'], ['peso', 'Peso', kg]], m.consultas);
   tabla('tabla-libro', [['fecha', 'Fecha', formatearFecha], ['tipo', 'Tipo', (t) => TIPOS_LIBRO[t] || t], ['titulo', 'Anotación'], ['detalle', 'Detalle'], ['peso', 'Peso', kg]], m.libro.slice(0, 30));
 }
