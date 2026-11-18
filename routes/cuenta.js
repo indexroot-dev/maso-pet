@@ -41,6 +41,8 @@ cuentaRouter.get('/mis-datos', (req, res) => {
     descargado_en: new Date().toISOString(),
     cuenta: db.prepare('SELECT nombre, email, creado_en, recordatorios, zona_lat, zona_lng, avisos_cerca FROM usuarios WHERE id = ?').get(id),
     mascotas: todos('SELECT * FROM mascotas WHERE usuario_id = ? ORDER BY nombre').map(fichaCompleta),
+    mascotas_que_cuido_como_tutor: todos(`SELECT m.*, u.nombre AS dueno FROM mascota_tutores t JOIN mascotas m ON m.id = t.mascota_id
+      JOIN usuarios u ON u.id = m.usuario_id WHERE t.usuario_id = ? AND t.estado = 'aceptado' ORDER BY m.nombre`).map(fichaCompleta),
     lugares_agregados: todos('SELECT id, nombre, categoria, direccion, descripcion, horario, mascotas_admitidas, lat, lng, creado_en FROM lugares WHERE creado_por = ?'),
     resenas_de_lugares: todos('SELECT l.nombre AS lugar, r.estrellas, r.comentario, r.creado_en FROM resenas r JOIN lugares l ON l.id = r.lugar_id WHERE r.usuario_id = ?'),
     lugares_favoritos: todos('SELECT l.nombre FROM favoritos f JOIN lugares l ON l.id = f.lugar_id WHERE f.usuario_id = ?').map((f) => f.nombre),

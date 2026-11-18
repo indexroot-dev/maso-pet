@@ -98,6 +98,22 @@
       </details>
     </section>
 
+    <!-- Tutores: otras personas que cuidan esta mascota -->
+    <section class="tarjeta no-imprimir" id="seccion-tutores">
+      <h2>👥 Tutores</h2>
+      <p class="sutil" id="ayuda-tutores">Las personas que cuidan a esta mascota contigo pueden ver y editar su ficha y su libro de control, y reciben los recordatorios de sus vacunas.</p>
+      <ul class="lista-tutores" id="lista-tutores"></ul>
+      <form id="form-tutor" class="oculto">
+        <div id="aviso-tutor"></div>
+        <div class="acciones">
+          <input name="email" type="email" required placeholder="Correo de la otra persona" aria-label="Correo de la otra persona" autocomplete="off" style="flex: 1; min-width: 200px">
+          <button class="btn" type="submit">Invitar</button>
+        </div>
+        <p class="sutil">La otra persona debe tener una cuenta en MasoPet. Le llegará una invitación para aceptar.</p>
+      </form>
+      <button class="btn peligro chico oculto" type="button" id="btn-salir-tutor">Dejar de ser tutor</button>
+    </section>
+
     <!-- Compartir con el veterinario -->
     <section class="tarjeta no-imprimir">
       <h2>🔗 Compartir con el veterinario</h2>

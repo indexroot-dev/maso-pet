@@ -4,6 +4,7 @@ import { fechaLocal, distanciaKm, limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
 import { requiereLogin } from './auth.js';
 import { notificar as notificarEnApp } from '../notificaciones.js';
+import { SQL_MIS_MASCOTAS } from '../tutores.js';
 
 const HORARIOS = ['manana', 'tarde', 'noche'];
 const RADIOS = [1, 3, 5, 10, 20];
@@ -67,7 +68,8 @@ paseosRouter.put('/perfil', (req, res) => {
   if (activo && !coordenadasValidas(lat, lng)) return res.status(400).json({ error: 'Marca tu zona en el mapa' });
 
   const horarios = (Array.isArray(req.body?.horarios) ? req.body.horarios : []).filter((h) => HORARIOS.includes(h));
-  const propias = new Set(db.prepare('SELECT id FROM mascotas WHERE usuario_id = ?').all(req.usuario.id).map((m) => m.id));
+  // Propias o que cuido como tutor
+  const propias = new Set(db.prepare(SQL_MIS_MASCOTAS).all(req.usuario.id, req.usuario.id).map((m) => m.id));
   const mascotas = [...new Set((Array.isArray(req.body?.mascotas) ? req.body.mascotas : []).map(Number))].filter((id) => propias.has(id));
   if (activo && !mascotas.length) return res.status(400).json({ error: 'Elige al menos una mascota que salga a pasear' });
 

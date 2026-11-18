@@ -5,6 +5,7 @@ import { limitador, urlPublica } from '../config.js';
 import { enviarCorreo, plantilla, boton, escHtml } from '../correo.js';
 import { enviarRecordatorio, proximasDosis } from '../recordatorios.js';
 import { borrarFoto } from '../fotos.js';
+import { traspasarMascotas } from '../tutores.js';
 
 const DIAS_SESION = 7;
 const MS_SESION = DIAS_SESION * 24 * 60 * 60 * 1000;
@@ -303,6 +304,8 @@ authRouter.delete('/cuenta', requiereLogin, limitador({ max: 10, minutos: 15 }),
     if (!otros) return res.status(400).json({ error: 'Eres el único administrador. Nombra a otro administrador antes de eliminar tu cuenta.' });
   }
 
+  // Las mascotas que otra persona también cuida no se borran: pasan a esa persona
+  traspasarMascotas(req.usuario.id);
   const fotos = db.prepare(`
     SELECT foto FROM mascotas WHERE usuario_id = ?1
     UNION SELECT foto FROM adopciones WHERE usuario_id = ?1

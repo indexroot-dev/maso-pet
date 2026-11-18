@@ -51,6 +51,8 @@ function pintarDatos(m) {
   $('btn-quitar-foto').classList.toggle('oculto', !m.foto);
   $('titulo').textContent = m.nombre;
   $('enlace-libro').href = `libro.html?id=${m.id}`;
+  // Solo el dueño puede eliminar la ficha
+  $('btn-eliminar').classList.toggle('oculto', !m.es_dueno);
   $('subtitulo').textContent = [m.especie, m.raza, m.sexo].filter(Boolean).join(' · ');
 
   const datos = [
@@ -85,6 +87,70 @@ async function cargar() {
     $('titulo').textContent = 'Ficha no disponible';
   }
 }
+
+// ---------- Tutores ----------
+let usuarioActualId = null;
+
+async function cargarTutores() {
+  const { es_dueno: esDueno, dueno, tutores, max } = await api(`/api/mascotas/${idMascota}/tutores`);
+  const fila = (nombre, detalle, quitar) => `<li>
+    <span class="avatar-tutor" aria-hidden="true">👤</span>
+    <span class="tutor-datos"><strong>${esc(nombre)}</strong>${detalle ? ` <span class="sutil">${detalle}</span>` : ''}</span>
+    ${quitar || ''}
+  </li>`;
+  $('lista-tutores').innerHTML = [
+    fila(dueno.id === usuarioActualId ? `${dueno.nombre} (tú)` : dueno.nombre, 'Tutor/a principal'),
+    ...tutores.map((t) => fila(
+      t.id === usuarioActualId ? `${t.nombre} (tú)` : t.nombre,
+      [t.estado === 'pendiente' ? '<span class="etiqueta ambar">Invitación pendiente</span>' : '', t.email ? esc(t.email) : ''].filter(Boolean).join(' · '),
+      esDueno ? `<button class="btn peligro chico" type="button" data-quitar="${t.id}" data-nombre="${esc(t.nombre)}" data-pendiente="${t.estado === 'pendiente' ? 1 : ''}">${t.estado === 'pendiente' ? 'Anular' : 'Quitar'}</button>` : '',
+    )),
+  ].join('');
+  // El dueño invita (mientras no llegue al máximo); los demás pueden salirse
+  $('form-tutor').classList.toggle('oculto', !esDueno || tutores.length + 1 >= max);
+  $('btn-salir-tutor').classList.toggle('oculto', esDueno);
+  $('ayuda-tutores').textContent = esDueno
+    ? 'Invita a otras personas que también cuidan a esta mascota (tu pareja, familia o quien la comparte contigo). Podrán ver y editar su ficha y su libro de control, y recibirán los recordatorios de sus vacunas.'
+    : `Cuidas a esta mascota junto a ${dueno.nombre}. Pueden ver y editar su ficha y su libro de control.`;
+}
+
+$('form-tutor').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  try {
+    const t = await api(`/api/mascotas/${idMascota}/tutores`, { method: 'POST', body: { email: form.email.value } });
+    form.reset();
+    mostrarAviso($('aviso-tutor'), `Listo: le enviamos la invitación a ${t.nombre}. Aparecerá como tutor cuando la acepte.`, 'exito');
+    cargarTutores();
+  } catch (err) {
+    mostrarAviso($('aviso-tutor'), err.message);
+  }
+});
+
+$('lista-tutores').addEventListener('click', async (e) => {
+  const boton = e.target.closest('[data-quitar]');
+  if (!boton) return;
+  const pregunta = boton.dataset.pendiente
+    ? `¿Anular la invitación a ${boton.dataset.nombre}?`
+    : `¿Quitar a ${boton.dataset.nombre} como tutor? Ya no podrá ver la ficha de ${$('titulo').textContent}.`;
+  if (!confirm(pregunta)) return;
+  try {
+    await api(`/api/mascotas/${idMascota}/tutores/${boton.dataset.quitar}`, { method: 'DELETE' });
+    cargarTutores();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+$('btn-salir-tutor').addEventListener('click', async () => {
+  if (!confirm(`¿Dejar de ser tutor de ${$('titulo').textContent}? Ya no verás su ficha ni su libro de control.`)) return;
+  try {
+    await api(`/api/mascotas/${idMascota}/tutores/${usuarioActualId}`, { method: 'DELETE' });
+    location.href = 'mascotas.html';
+  } catch (err) {
+    alert(err.message);
+  }
+});
 
 // ---------- Enlaces para el veterinario ----------
 async function cargarEnlaces() {
@@ -210,6 +276,8 @@ $('btn-eliminar').addEventListener('click', async () => {
 
 requerirSesion().then((u) => {
   if (!u) return;
+  usuarioActualId = u.id;
   cargar();
+  cargarTutores().catch(() => $('seccion-tutores').classList.add('oculto'));
   cargarEnlaces().catch(() => {});
 });

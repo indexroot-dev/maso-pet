@@ -396,6 +396,42 @@ db.exec(`
 `);
 agregarColumna('visitas', 'app', 'INTEGER NOT NULL DEFAULT 0');
 
+// Tutores de una mascota: el dueño (mascotas.usuario_id) invita a otras cuentas a cuidarla con él.
+// estado 'pendiente' hasta que la persona acepta; 'aceptado' le da acceso a la ficha y al libro.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS mascota_tutores (
+    mascota_id INTEGER NOT NULL REFERENCES mascotas(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    estado TEXT NOT NULL DEFAULT 'pendiente',
+    invitado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (mascota_id, usuario_id)
+  );
+  CREATE INDEX IF NOT EXISTS mascota_tutores_usuario ON mascota_tutores (usuario_id, estado);
+
+  -- Recordatorios ya avisados, por persona (con varios tutores, cada uno recibe el suyo).
+  -- Reemplaza a recordatorios_enviados, que no guardaba a quién se avisó.
+  CREATE TABLE IF NOT EXISTS recordatorios_avisados (
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    tabla TEXT NOT NULL,
+    registro_id INTEGER NOT NULL,
+    proxima_fecha TEXT NOT NULL,
+    enviado_en TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (usuario_id, tabla, registro_id, proxima_fecha)
+  );
+`);
+// Una sola vez: lo ya avisado antes queda a nombre del dueño de cada mascota (para no repetir correos)
+if (!db.prepare('SELECT 1 FROM recordatorios_avisados LIMIT 1').get()) {
+  db.exec(`
+    INSERT OR IGNORE INTO recordatorios_avisados (usuario_id, tabla, registro_id, proxima_fecha, enviado_en)
+    SELECT m.usuario_id, r.tabla, r.registro_id, r.proxima_fecha, r.enviado_en FROM recordatorios_enviados r
+    JOIN vacunas v ON r.tabla = 'vacunas' AND v.id = r.registro_id JOIN mascotas m ON m.id = v.mascota_id;
+    INSERT OR IGNORE INTO recordatorios_avisados (usuario_id, tabla, registro_id, proxima_fecha, enviado_en)
+    SELECT m.usuario_id, r.tabla, r.registro_id, r.proxima_fecha, r.enviado_en FROM recordatorios_enviados r
+    JOIN desparasitaciones d ON r.tabla = 'desparasitaciones' AND d.id = r.registro_id JOIN mascotas m ON m.id = d.mascota_id;
+  `);
+}
+
 // Lugares de ejemplo (ficticios) para que el mapa no parta vacío
 const { total } = db.prepare('SELECT COUNT(*) AS total FROM lugares').get();
 if (total === 0) {

@@ -537,3 +537,13 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .legal ul { padding-left: 1.2rem; margin: .4rem 0 .8rem; }
 .legal li { margin-bottom: .35rem; }
 .pie-legal { text-align: center; font-size: .85rem; margin: 1.5rem 0 0; }
+
+/* ---------- Tutores de una mascota ---------- */
+.etiqueta.tutores { margin-top: .4rem; }
+.lista-tutores { list-style: none; padding: 0; margin: .25rem 0 1rem; }
+.lista-tutores li { display: flex; align-items: center; gap: .6rem; padding: .55rem 0; border-bottom: 1px solid var(--borde); flex-wrap: wrap; }
+.lista-tutores li:last-child { border-bottom: 0; }
+.avatar-tutor { width: 34px; height: 34px; border-radius: 50%; background: var(--verde-claro); display: grid; place-items: center; flex-shrink: 0; }
+.tutor-datos { flex: 1; min-width: 160px; }
+.invitacion { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; border-left: 6px solid var(--marca); }
+.invitacion-texto { flex: 1; min-width: 220px; }

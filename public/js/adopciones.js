@@ -44,7 +44,8 @@ async function abrirFormulario() {
   form.classList.remove('oculto');
   if (!selector) {
     selector = mapaSelector('mapa-adopcion', (latlng) => { form.lat.value = latlng.lat; form.lng.value = latlng.lng; });
-    mascotas = await api('/api/mascotas');
+    // Solo las propias: una mascota que cuido como tutor la publica su dueño
+    mascotas = (await api('/api/mascotas')).filter((m) => m.es_dueno);
     $('select-mascota').insertAdjacentHTML('beforeend', mascotas.map((m) => `<option value="${m.id}">${ICONOS_ESPECIE[m.especie] || '🐾'} ${esc(m.nombre)}</option>`).join(''));
   }
   setTimeout(() => selector.mapa.invalidateSize(), 50);

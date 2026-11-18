@@ -208,6 +208,7 @@ function pintarAnotaciones() {
 async function cargar() {
   try {
     ficha = await api(`/api/mascotas/${encodeURIComponent(idMascota)}`);
+    $('duenio').textContent = `Tutor/a: ${ficha.dueno}`;
   } catch (err) {
     mostrarAviso($('aviso-general'), err.message);
     $('titulo').textContent = 'Libro no disponible';
@@ -275,6 +276,5 @@ $('select-tipo').innerHTML = Object.entries(TIPOS).map(([k, t]) => `<option valu
 form.fecha.value = hoyISO();
 requerirSesion().then((u) => {
   if (!u) return;
-  $('duenio').textContent = `Tutor/a: ${u.nombre}`;
   cargar();
 });

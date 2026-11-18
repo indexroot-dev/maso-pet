@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { requiereLogin } from './auth.js';
-import { avisarPerdidaCerca } from '../notificaciones.js';
+import { avisarPerdidaCerca, notificar } from '../notificaciones.js';
+import { SQL_MIS_MASCOTAS, mascotaConAcceso, idsTutores } from '../tutores.js';
 
 const texto = (valor, max) => String(valor ?? '').trim().slice(0, max) || null;
 const DIAS_REENCUENTROS = 14;
@@ -12,18 +13,18 @@ perdidasRouter.use(requiereLogin);
 // Avisos activos y reencuentros recientes
 perdidasRouter.get('/', (req, res) => {
   res.json(db.prepare(`
-    SELECT p.*, m.nombre, m.especie, m.raza, m.sexo, m.color, m.foto, u.nombre AS tutor, (p.usuario_id = ?) AS propia
+    SELECT p.*, m.nombre, m.especie, m.raza, m.sexo, m.color, m.foto, u.nombre AS tutor, (p.usuario_id = ? OR p.mascota_id IN (${SQL_MIS_MASCOTAS})) AS propia
     FROM perdidas p
     JOIN mascotas m ON m.id = p.mascota_id
     JOIN usuarios u ON u.id = p.usuario_id
     WHERE p.oculto = 0 AND (p.estado = 'perdida' OR p.encontrada_en >= datetime('now', ?))
     ORDER BY p.estado = 'perdida' DESC, p.fecha DESC, p.id DESC
-  `).all(req.usuario.id, `-${DIAS_REENCUENTROS} days`));
+  `).all(req.usuario.id, req.usuario.id, req.usuario.id, `-${DIAS_REENCUENTROS} days`));
 });
 
 perdidasRouter.post('/', (req, res) => {
-  const mascota = db.prepare('SELECT id, nombre FROM mascotas WHERE id = ? AND usuario_id = ?')
-    .get(Number(req.body?.mascota_id), req.usuario.id);
+  // Cualquiera de sus tutores puede reportarla
+  const mascota = mascotaConAcceso(req.usuario.id, Number(req.body?.mascota_id));
   if (!mascota) return res.status(400).json({ error: 'Elige una de tus mascotas' });
   if (db.prepare("SELECT 1 FROM perdidas WHERE mascota_id = ? AND estado = 'perdida'").get(mascota.id)) {
     return res.status(409).json({ error: 'Esta mascota ya tiene un aviso activo' });
@@ -43,20 +44,23 @@ perdidasRouter.post('/', (req, res) => {
     INSERT INTO perdidas (mascota_id, usuario_id, fecha, descripcion, contacto, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(mascota.id, req.usuario.id, fecha, texto(req.body?.descripcion, 1000), contacto, lat, lng);
   avisarPerdidaCerca({ id: Number(lastInsertRowid), lat, lng, descripcion: texto(req.body?.descripcion, 1000) }, mascota, req.usuario.id);
+  notificar(idsTutores(mascota.id).filter((id) => id !== req.usuario.id),
+    `🚨 ${req.usuario.nombre} reportó a ${mascota.nombre} como perdida`, `perdidas.html#aviso-${lastInsertRowid}`);
   res.status(201).json({ id: Number(lastInsertRowid) });
 });
 
 perdidasRouter.put('/:id/encontrada', (req, res) => {
   const { changes } = db.prepare(`
     UPDATE perdidas SET estado = 'encontrada', encontrada_en = datetime('now')
-    WHERE id = ? AND usuario_id = ? AND estado = 'perdida'
-  `).run(Number(req.params.id), req.usuario.id);
+    WHERE id = ? AND (usuario_id = ? OR mascota_id IN (${SQL_MIS_MASCOTAS})) AND estado = 'perdida'
+  `).run(Number(req.params.id), req.usuario.id, req.usuario.id, req.usuario.id);
   if (!changes) return res.status(404).json({ error: 'Aviso no encontrado' });
   res.status(204).end();
 });
 
 perdidasRouter.delete('/:id', (req, res) => {
-  const { changes } = db.prepare('DELETE FROM perdidas WHERE id = ? AND usuario_id = ?').run(Number(req.params.id), req.usuario.id);
+  const { changes } = db.prepare(`DELETE FROM perdidas WHERE id = ? AND (usuario_id = ? OR mascota_id IN (${SQL_MIS_MASCOTAS}))`)
+    .run(Number(req.params.id), req.usuario.id, req.usuario.id, req.usuario.id);
   if (!changes) return res.status(404).json({ error: 'Aviso no encontrado' });
   res.status(204).end();
 });
