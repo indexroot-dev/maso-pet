@@ -444,6 +444,11 @@ db.exec(`
   );
 `);
 
+// Dosis dadas ("✓ Ya se lo di"): quedan en el libro de control con el medicamento, quién la dio y la hora
+agregarColumna('libro', 'medicamento_id', 'INTEGER REFERENCES medicamentos(id) ON DELETE SET NULL');
+agregarColumna('libro', 'usuario_id', 'INTEGER REFERENCES usuarios(id) ON DELETE SET NULL');
+agregarColumna('libro', 'hora', 'TEXT');
+
 // Una sola vez: lo ya avisado antes queda a nombre del dueño de cada mascota (para no repetir correos)
 if (!db.prepare('SELECT 1 FROM recordatorios_avisados LIMIT 1').get()) {
   db.exec(`

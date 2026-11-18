@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import { db } from '../db.js';
-import { urlPublica, limitador } from '../config.js';
+import { urlPublica, limitador, fechaLocal } from '../config.js';
 import { guardarFoto, borrarFoto } from '../fotos.js';
 import { requiereLogin } from './auth.js';
 import { notificar } from '../notificaciones.js';
@@ -271,6 +271,119 @@ mascotasRouter.delete('/:id/tutores/:usuarioId', (req, res) => {
   res.status(204).end();
 });
 
+// ---------- "✓ Ya se lo di": registra una dosis en el libro de control y avisa a los otros tutores ----------
+const dosAdigitos = (n) => String(n).padStart(2, '0');
+
+mascotasRouter.post('/:id/medicamentos/:medId/dosis', (req, res) => {
+  const mascota = mascotaDelUsuario(req, res);
+  if (!mascota) return;
+  const med = db.prepare('SELECT * FROM medicamentos WHERE id = ? AND mascota_id = ?').get(Number(req.params.medId), mascota.id);
+  if (!med) return res.status(404).json({ error: 'Medicamento no encontrado' });
+
+  const ahora = new Date();
+  const hora = `${dosAdigitos(ahora.getHours())}:${dosAdigitos(ahora.getMinutes())}`;
+  const quien = req.usuario.nombre.trim().split(/\s+/)[0];
+  const { lastInsertRowid } = db.prepare(`
+    INSERT INTO libro (mascota_id, fecha, tipo, titulo, detalle, medicamento_id, usuario_id, hora)
+    VALUES (?, ?, 'medicamento', ?, ?, ?, ?, ?)
+  `).run(mascota.id, fechaLocal(), `${med.nombre}${med.dosis ? ` (${med.dosis})` : ''}`, `${quien} se lo dio a las ${hora}`, med.id, req.usuario.id, hora);
+  notificar(idsTutores(mascota.id).filter((id) => id !== req.usuario.id),
+    `💊 ${quien} le dio ${med.nombre} a ${mascota.nombre} a las ${hora}`, `ficha.html?id=${mascota.id}`);
+  res.status(201).json(db.prepare('SELECT * FROM libro WHERE id = ?').get(lastInsertRowid));
+});
+
+// ---------- Agregar una cita o un medicamento al calendario del celular (archivo .ics) ----------
+// Horas que aparecen en el texto del horario, ej: "8:00 y 20:00" → ['08:00', '20:00']
+export function horasDelHorario(horario) {
+  const horas = [...String(horario || '').matchAll(/\b([01]?\d|2[0-3])[:.h]([0-5]\d)\b/g)].map((m) => `${dosAdigitos(m[1])}:${m[2]}`);
+  return [...new Set(horas)].sort();
+}
+const icsTexto = (t) => String(t ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+const icsFecha = (iso) => iso.replaceAll('-', '');
+const icsHora = (hhmm) => `${hhmm.replace(':', '')}00`;
+// El formato pide cortar las líneas largas en trozos de máximo 75 bytes (las siguientes empiezan con un espacio)
+function icsPlegar(linea) {
+  const trozos = [];
+  let actual = '';
+  for (const caracter of linea) {
+    if (Buffer.byteLength(actual + caracter) > (trozos.length ? 74 : 75)) { trozos.push(actual); actual = ''; }
+    actual += caracter;
+  }
+  trozos.push(actual);
+  return trozos.join('\r\n ');
+}
+
+mascotasRouter.get('/:id/:seccion/:registroId/calendario.ics', (req, res) => {
+  const { seccion } = req.params;
+  if (!['citas', 'medicamentos'].includes(seccion)) return res.status(404).json({ error: 'Sección no válida' });
+  const mascota = mascotaDelUsuario(req, res);
+  if (!mascota) return;
+  const r = db.prepare(`SELECT * FROM ${seccion} WHERE id = ? AND mascota_id = ?`).get(Number(req.params.registroId), mascota.id);
+  if (!r) return res.status(404).json({ error: 'Registro no encontrado' });
+
+  const sello = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const enlace = `${urlPublica()}/ficha.html?id=${mascota.id}`;
+  const eventos = [];
+  if (seccion === 'citas') {
+    const inicio = r.hora ? `DTSTART:${icsFecha(r.fecha)}T${icsHora(r.hora)}` : `DTSTART;VALUE=DATE:${icsFecha(r.fecha)}`;
+    eventos.push([
+      'BEGIN:VEVENT', `UID:masopet-cita-${r.id}@masopet.cl`, `DTSTAMP:${sello}`, inicio,
+      r.hora ? 'DURATION:PT1H' : 'DURATION:P1D',
+      `SUMMARY:${icsTexto(`🩺 ${mascota.nombre}: ${r.motivo}`)}`,
+      r.veterinario ? `LOCATION:${icsTexto(r.veterinario)}` : null,
+      `DESCRIPTION:${icsTexto([r.notas, `Ficha en MasoPet: ${enlace}`].filter(Boolean).join('\n'))}`,
+      // Aviso el día anterior y 1 hora antes (o a las 9:00 del día anterior si no tiene hora)
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsTexto(`Mañana: cita de ${mascota.nombre}`)}`, `TRIGGER:${r.hora ? '-P1D' : '-PT15H'}`, 'END:VALARM',
+      ...(r.hora ? ['BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsTexto(`En 1 hora: cita de ${mascota.nombre}`)}`, 'TRIGGER:-PT1H', 'END:VALARM'] : []),
+      'END:VEVENT',
+    ]);
+  } else {
+    // Un evento que se repite por cada hora del horario (si no indica horas, a las 9:00)
+    for (const hora of horasDelHorario(r.horario).length ? horasDelHorario(r.horario) : ['09:00']) {
+      eventos.push([
+        'BEGIN:VEVENT', `UID:masopet-medicamento-${r.id}-${hora.replace(':', '')}@masopet.cl`, `DTSTAMP:${sello}`,
+        `DTSTART:${icsFecha(r.fecha_inicio)}T${icsHora(hora)}`, 'DURATION:PT15M',
+        `RRULE:FREQ=DAILY;INTERVAL=${r.cada_dias}${r.fecha_fin ? `;UNTIL=${icsFecha(r.fecha_fin)}T235959` : ''}`,
+        `SUMMARY:${icsTexto(`💊 ${mascota.nombre}: ${r.nombre}${r.dosis ? ` (${r.dosis})` : ''}`)}`,
+        `DESCRIPTION:${icsTexto([r.notas, `Marca la dosis con “✓ Ya se lo di” en MasoPet: ${enlace}`].filter(Boolean).join('\n'))}`,
+        'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsTexto(`Toca darle ${r.nombre} a ${mascota.nombre}`)}`, 'TRIGGER:PT0M', 'END:VALARM',
+        'END:VEVENT',
+      ]);
+    }
+  }
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MasoPet//Recordatorios//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    ...eventos.flat().filter(Boolean), 'END:VCALENDAR'].map(icsPlegar).join('\r\n');
+  const nombre = `${seccion === 'citas' ? 'cita' : 'medicamento'}-${mascota.nombre}`.normalize('NFD').replace(/[^\w-]+/g, '').toLowerCase();
+  res.set({ 'Content-Type': 'text/calendar; charset=utf-8', 'Content-Disposition': `attachment; filename="${nombre || 'masopet'}.ics"`, 'Cache-Control': 'no-store' });
+  res.send(`${ics}\r\n`);
+});
+
+// Validaciones comunes al crear y al editar un registro del historial
+function problemaRegistro(config, datos) {
+  const faltante = config.requeridos.find((c) => !datos[c]);
+  if (faltante) return `El campo "${faltante.replace('_', ' ')}" es obligatorio`;
+  const invalido = Object.entries(config.opciones || {}).find(([c, validos]) => !validos.includes(datos[c]));
+  if (invalido) return `El valor de "${invalido[0]}" no es válido`;
+  return config.validar?.(datos) || null;
+}
+
+// Editar un registro: PUT /api/mascotas/:id/vacunas/5 (también medicamentos, citas, consultas, etc.)
+mascotasRouter.put('/:id/:seccion/:registroId', (req, res) => {
+  const config = SECCIONES[req.params.seccion];
+  if (!config) return res.status(404).json({ error: 'Sección no válida' });
+  const mascota = mascotaDelUsuario(req, res);
+  if (!mascota) return;
+
+  const datos = extraer(req.body, config.campos);
+  const problema = problemaRegistro(config, datos);
+  if (problema) return res.status(400).json({ error: problema });
+
+  const { changes } = db.prepare(`UPDATE ${req.params.seccion} SET ${config.campos.map((c) => `${c} = ?`).join(', ')} WHERE id = ? AND mascota_id = ?`)
+    .run(...config.campos.map((c) => datos[c]), Number(req.params.registroId), mascota.id);
+  if (!changes) return res.status(404).json({ error: 'Registro no encontrado' });
+  res.json(db.prepare(`SELECT * FROM ${req.params.seccion} WHERE id = ?`).get(Number(req.params.registroId)));
+});
+
 // Registros del historial: /api/mascotas/:id/vacunas, /desparasitaciones, /consultas, /libro
 mascotasRouter.post('/:id/:seccion', (req, res) => {
   const config = SECCIONES[req.params.seccion];
@@ -279,11 +392,7 @@ mascotasRouter.post('/:id/:seccion', (req, res) => {
   if (!mascota) return;
 
   const datos = extraer(req.body, config.campos);
-  const faltante = config.requeridos.find((c) => !datos[c]);
-  if (faltante) return res.status(400).json({ error: `El campo "${faltante.replace('_', ' ')}" es obligatorio` });
-  const invalido = Object.entries(config.opciones || {}).find(([c, validos]) => !validos.includes(datos[c]));
-  if (invalido) return res.status(400).json({ error: `El valor de "${invalido[0]}" no es válido` });
-  const problema = config.validar?.(datos);
+  const problema = problemaRegistro(config, datos);
   if (problema) return res.status(400).json({ error: problema });
 
   const columnas = ['mascota_id', ...config.campos];

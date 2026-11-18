@@ -570,3 +570,16 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .recordatorio.medicamento { background: #eef4ff; color: #1e40af; }
 .recordatorio.cita { background: var(--verde-claro); color: var(--verde-osc); }
 .recordatorio .sutil { color: inherit; opacity: .8; font-size: .85em; }
+.recordatorio.con-acciones { flex-direction: column; align-items: stretch; gap: .45rem; padding: .65rem .8rem; }
+.recordatorio-fila { display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.recordatorio-acciones { display: flex; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
+.dosis-hoy { display: flex; gap: .35rem; flex-wrap: wrap; font-size: .9rem; }
+.etiqueta.dada { background: #dcfce7; color: #166534; font-size: .85rem; padding: .15rem .55rem; }
+.etiqueta.dada .enlace-boton { font-size: .8rem; color: #166534; margin-left: .25rem; }
+.calendario summary { cursor: pointer; color: var(--verde); font-weight: 600; font-size: .9rem; padding: .3rem 0; }
+.calendario[open] { flex-basis: 100%; }
+.calendario .acciones { margin-top: .35rem; }
+.calendario .sutil { margin: .35rem 0 0; color: var(--gris); }
+.acciones-fila { white-space: nowrap; }
+.acciones-fila .btn { margin-left: .2rem; }
+.btn-cancelar-edicion { margin-left: .5rem; }
